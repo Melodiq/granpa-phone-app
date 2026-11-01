@@ -30,6 +30,7 @@ object Setup {
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION
         )
+        if (Build.VERSION.SDK_INT >= 26) p.add(Manifest.permission.ANSWER_PHONE_CALLS)
         if (Build.VERSION.SDK_INT >= 33) p.add(Manifest.permission.POST_NOTIFICATIONS)
         return p.toTypedArray()
     }
@@ -80,12 +81,12 @@ class SetupActivity : Activity() {
         title("Настройка помощника")
         note("Для родственников. Пройдите все пункты сверху вниз. Зелёная галочка — готово.")
 
-        item("1. Разрешения: микрофон, контакты, звонки, телефон, геолокация", Setup.allPermissions(this)) {
+        item("1. Разрешения: микрофон, контакты, звонки, ответ на звонки, геолокация", Setup.allPermissions(this)) {
             if (Build.VERSION.SDK_INT >= 23) requestPermissions(Setup.permissions(), 1)
         }
 
         if (Build.VERSION.SDK_INT >= 23) {
-            item("2. Показ поверх других окон (приветствие при нажатии боковой кнопки)", Settings.canDrawOverlays(this)) {
+            item("2. Показ поверх других окон (приветствие при нажатии боковой кнопки и ответ на звонок голосом)", Settings.canDrawOverlays(this)) {
                 open(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             }
             val pm = getSystemService(PowerManager::class.java)

@@ -37,9 +37,34 @@ class KeeperService : Service() {
     private val announce = object : Runnable {
         override fun run() {
             if (callState != TelephonyManager.CALL_STATE_RINGING) return
-            App.instance.speaker.say("Звонит: $ringName")
+            // Экран звонка сам говорит и слушает; озвучиваем только если его не видно.
+            if (!IncomingActivity.visible) App.instance.speaker.say("Звонит: $ringName")
             handler.postDelayed(this, 5000)
         }
+    }
+
+    /** Открыть экран входящего с ответом голосом. false — нельзя (нет разрешения). */
+    private fun openIncoming(): Boolean {
+        val canOpen = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
+        if (!canOpen) return false
+        Calls.quietRinger(this)
+        return try {
+            startActivity(
+                Intent(this, IncomingActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .putExtra(IncomingActivity.EXTRA_NAME, ringName)
+            )
+            true
+        } catch (_: Exception) {
+            Calls.restoreRinger(this)
+            false
+        }
+    }
+
+    private fun stopRinging() {
+        handler.removeCallbacks(announce)
+        IncomingActivity.close()
+        Calls.restoreRinger(this)
     }
 
     private val openAssistant = Runnable {
@@ -74,6 +99,7 @@ class KeeperService : Service() {
     override fun onCreate() {
         super.onCreate()
         startFg()
+        Calls.restoreRinger(this) // на случай, если прошлый раз служба упала во время звонка
         val f = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_USER_PRESENT)
@@ -135,16 +161,21 @@ class KeeperService : Service() {
                         ringName = Contacts.nameFor(this@KeeperService, phoneNumber)
                         if (was != TelephonyManager.CALL_STATE_RINGING) {
                             handler.removeCallbacks(announce)
-                            handler.postDelayed(announce, 1200)
+                            val opened = openIncoming()
+                            // Если экран звонка не открылся или его перекрыли — озвучиваем сами.
+                            handler.postDelayed(announce, if (opened) 3000 else 1200)
+                        } else {
+                            // Номер пришёл вторым событием — обновить имя на экране звонка.
+                            IncomingActivity.current?.let { openIncoming() }
                         }
                     }
                     TelephonyManager.CALL_STATE_OFFHOOK -> {
-                        handler.removeCallbacks(announce)
+                        stopRinging()
                         handler.removeCallbacks(openAssistant)
                         if (was == TelephonyManager.CALL_STATE_RINGING) App.instance.speaker.stop()
                     }
                     else -> {
-                        handler.removeCallbacks(announce)
+                        stopRinging()
                         if (was != TelephonyManager.CALL_STATE_IDLE) lastCallEnd = System.currentTimeMillis()
                     }
                 }
