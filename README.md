@@ -1,112 +1,231 @@
-# Помощник Алёша
+# Помощник Алёша · Alyosha Assistant · 阿廖沙助手
 
-[English version below](#alesha-voice-assistant)
+[Русский](#русский) · [English](#english) · [中文](#中文)
 
-Android-приложение для почти незрячего пожилого человека. Всё голосом, распознавание речи работает **без интернета**.
+Android-приложение для почти незрячего пожилого человека: всё голосом, распознавание речи работает без интернета.
+An Android voice assistant for an elderly person who is almost blind; speech recognition works offline.
+为几乎失明的老人设计的安卓语音助手，语音识别可离线使用。
 
-## Что умеет
-
-| Команда | Что происходит |
-|---|---|
-| нажать боковую кнопку (экран включился) | «Здравствуйте. Слушаю.» + сигнал, можно говорить |
-| касание в любом месте экрана или виджета | сигнал, можно говорить |
-| «позвони дочери», «дочке», «набери Андрея» | «Позвонить: Дочь? Скажите да или нет» → «да» → «Звоню: Дочь» |
-| «время», «который час» | «Сейчас пятнадцать часов двадцать минут» |
-| «какое сегодня число», «какой день недели», «дата» | «Сегодня воскресенье, первое ноября» |
-| «погода» | погода сейчас и через 1–2 часа (нужен интернет) |
-| «погода на завтра», «погода послезавтра» | прогноз на день: от … до … градусов, осадки, сильный ветер |
-| «запиши» | «Что записать?» → «Когда?» → «Записываю… Верно?» |
-| «что у меня сегодня / завтра», «мои записи» | читает записи |
-| «удали запись» | по очереди предлагает записи на удаление |
-| «повтори» | повторяет последний ответ |
-| «помощь» | перечисляет команды |
-| «отбой» | помощник сворачивается и отдыхает: не здоровается при включении экрана |
-| «Алёша», «Алёша, привет» | зовёт помощника, даже при выключенном экране: «Да, слушаю» |
-
-- **Входящий звонок:** экран «Звонит: Дочь», вслух имя и подсказка. Ответить — «ответить», «подними трубку», «возьми трубку», «алло» или касание экрана. Сбросить — «сбросить», «не отвечать», «положи трубку». Пока помощник слушает, мелодия звонка тихая, потом громкость возвращается.
-- **Напоминания:** за сутки, за 6 часов, за 3 часа и за час. Повторяются каждые 5 минут, пока экран не включат.
-- **Обратная связь:** после каждой команды звук и вибрация, на экране цветной круг: жёлтый дышит — говорите, зелёный — услышал, луна — отдыхает.
-- **Виджет:** большая кнопка на пол-экрана или весь экран (часы, дата, «Алёша»). Нажатие — помощник сразу слушает.
-- **Голос:** спокойный, мужской по умолчанию; любой скачанный русский голос можно выбрать в настройке.
-- **Погода:** только Open-Meteo — сейчас, через 1–2 часа, завтра и послезавтра.
-- **Язык:** русский, английский или китайский (в настройке). Меняется всё: надписи, голос помощника и голосовые команды. Слово пробуждения: «Алёша» / «Alyosha», «Alex» / «阿廖沙».
-- Регистр и падежи не важны: «Дочь», «дочь», «дочери», «дочке» — один контакт.
-
-## Установка
-
-1. На телефоне откройте последнюю версию: **Releases → granpa-phone.apk** (справа на странице репозитория).
-2. Скачайте и установите APK (разрешите установку из этого источника).
-3. Откройте «Помощник Алёша» → откроется экран настройки. Нажмите все жёлтые плашки, пока они не станут зелёными.
-4. Экран настройки потом открывается **удержанием пальца на экране 5 секунд**.
-5. Виджет: долгое нажатие на рабочем столе → Виджеты → «Алёша — большая кнопка» → растянуть.
-
-### Обязательно на Tecno (HiOS)
-
-Иначе система выключит помощника:
-- Настройки приложения → **Автозапуск** → включить.
-- Батарея → **Без ограничений**.
-- В списке недавних приложений закрепить помощника (значок замка).
-
-### Xiaomi / Poco / Redmi (HyperOS, MIUI)
-
-В настройке помощника есть раздел Xiaomi: включите «Всплывающие окна, когда запущено в фоне», «Экран блокировки» и «Автозапуск», а в батарее — «Нет ограничений». Без этого «Алёша» при выключенном экране срабатывает через раз. Счётчик «услышано / открылось» в настройке показывает, где именно теряется команда.
-
-### Советы
-
-- Подписывайте контакты коротко: «Дочь», «Сын Андрей», «Соседка Валя». В настройке видно, какие контакты распознаются.
-- Отключите блокировку экрана (Безопасность → Блокировка экрана → Нет).
-- Слово «Алёша» помощник ждёт постоянно, это расходует батарею. В настройке можно оставить только режим «в отбое».
-- После перезагрузки телефона Android не даёт слушать микрофон из фона, пока приложение не откроют один раз.
-
-## Сборка
-
-Собирается автоматически GitHub Actions при каждом изменении в `main`, готовый APK выкладывается в Releases. Модель распознавания Vosk (`vosk-model-small-ru-0.22`) скачивается во время сборки.
+**Скачать / Download / 下载:** [Releases → granpa-phone.apk](https://github.com/Melodiq/granpa-phone-app/releases/latest)
 
 ---
 
-# Alesha voice assistant
+## Русский
 
-An Android app for an elderly person who is almost blind. Everything works by voice, and speech recognition runs **fully offline**. It speaks and understands Russian, English and Chinese.
+### Как пользоваться
 
-## Features
+- **Нажать боковую кнопку** (экран включился) → «Здравствуйте. Слушаю.» и сигнал, можно говорить.
+- **Коснуться экрана** в любом месте или **нажать виджет** → сигнал, можно говорить.
+- **Сказать «Алёша»** → «Да, слушаю», даже при выключенном экране.
+- После каждой команды звук и вибрация: команда услышана.
 
-| Say / do | What happens |
+### Команды
+
+| Сказать | Что произойдёт |
 |---|---|
-| press the side button (screen turns on) | greeting + beep, then it listens |
-| tap anywhere on the screen or the widget | beep, then it listens |
-| "позвони дочери" (call my daughter) | asks to confirm the contact, then dials |
-| "время" (time) | says the current time |
-| "какое сегодня число", "какой день недели" (date, weekday) | says the weekday and date |
-| "погода" (weather) | weather now and for the next 1–2 hours (needs internet) |
-| "погода на завтра" / "послезавтра" | forecast for tomorrow or the day after |
-| "запиши" (take a note) | asks what and when, confirms, then reminds |
-| "что у меня сегодня / завтра" | reads today's or tomorrow's notes |
-| "удали запись" | offers notes one by one for deletion |
-| "повтори" | repeats the last answer |
-| "помощь" | lists the commands |
-| "отбой" (rest) | minimizes and stops greeting on screen-on |
-| "Алёша" | wake word: calls the assistant, even with the screen off |
+| «позвони дочери», «дочке», «набери Андрея» | «Позвонить: Дочь? Скажите да или нет» → «да» → звонок |
+| «время», «который час» | «Сейчас пятнадцать часов двадцать минут» |
+| «какое сегодня число», «какой день недели» | «Сегодня воскресенье, первое ноября» |
+| «погода» | погода сейчас и через 1–2 часа |
+| «погода на завтра», «погода послезавтра» | прогноз на день: температура, осадки, сильный ветер |
+| «запиши» | «Что записать?» → «Когда?» → «Записываю… Верно?» |
+| «что у меня сегодня», «что у меня завтра», «мои записи» | читает записи |
+| «удали запись» | по очереди предлагает записи на удаление |
+| «повтори» | повторяет последний ответ |
+| «помощь» | перечисляет команды |
+| «отбой» | помощник сворачивается и не здоровается при включении экрана |
+| «Алёша», «Алёша, привет» | зовёт помощника |
 
-- **Incoming calls:** a full-screen card announces the caller by name. Say "ответить" / "подними трубку" or tap the screen to answer; say "сбросить" to decline. The ringtone is lowered while the assistant listens and restored afterwards.
-- **Reminders:** 24, 6, 3 and 1 hour before an event, repeated every 5 minutes until the screen is turned on.
-- **Feedback:** a sound and vibration after every command, plus a large colored circle: breathing amber means "speak", green means "heard", a moon means resting.
-- **Widget:** a half-screen or full-screen button with a clock and date; tapping it starts listening right away.
-- **Voice:** a calm male voice by default; any installed offline Russian voice can be picked in setup.
-- **Weather:** Open-Meteo only — now, in 1–2 hours, tomorrow and the day after.
-- **Languages:** Russian, English or Chinese, switched in setup. Everything follows the choice: on-screen text, the assistant's voice and voice commands (e.g. "call my daughter", "weather tomorrow", "给女儿打电话", "明天天气"). Wake word: "Alyosha" or "Alex" in English, "阿廖沙" in Chinese.
-- Contact matching ignores letter case and Russian word endings, so "Дочь", "дочери" and "дочке" all match the same contact.
+### Входящие звонки
 
-## Installation
+Экран «Звонит: Дочь», имя вслух и подсказка.
+- **Ответить:** «ответить», «подними трубку», «возьми трубку», «алло» или касание экрана.
+- **Сбросить:** «сбросить», «не отвечать», «положи трубку».
 
-1. On the phone, open **Releases → granpa-phone.apk** and install it (allow installs from this source).
-2. Open "Помощник Алёша". The setup screen appears; tap every amber tile until it turns green.
-3. To reopen setup later, **hold a finger on the main screen for 5 seconds**.
-4. Widget: long-press the home screen → Widgets → "Алёша — большая кнопка", then resize it.
+Пока помощник слушает, мелодия звонка тихая, потом громкость возвращается.
 
-On Xiaomi / Poco / Redmi (HyperOS, MIUI), use the Xiaomi section in setup to allow pop-up windows in the background, showing on the lock screen and autostart, and set battery to No restrictions; otherwise the wake word works unreliably with the screen off. A heard/opened counter in setup shows where it fails.
+### Напоминания
 
-On Tecno / Infinix (HiOS), also enable **Autostart**, set battery to **No restrictions**, and lock the app in the recent-apps list, or the system will stop it.
+За сутки, за 6 часов, за 3 часа и за час до события. Каждое повторяется каждые 5 минут, пока экран не включат.
+
+### Экран
+
+Крупные часы и дата, в центре цветной круг состояния:
+- жёлтый дышит — говорите;
+- зелёный — услышал;
+- светлый — помощник говорит;
+- луна — отдыхает.
+
+**Виджет:** большая кнопка на пол-экрана или весь экран (часы, дата, «Алёша»). Нажатие — помощник сразу слушает.
+
+### Язык
+
+Русский, английский или китайский, выбирается в настройке. Меняется всё: надписи, голос помощника и голосовые команды.
+
+### Установка
+
+1. Скачайте и установите `granpa-phone.apk` (разрешите установку из этого источника).
+2. Откройте «Помощник Алёша» → экран настройки. Нажмите все жёлтые плашки, пока они не станут зелёными.
+3. В разделе «Голос помощника» выберите спокойный голос.
+4. Настройка потом открывается **удержанием пальца на экране 5 секунд**.
+5. Виджет: долгое нажатие на рабочем столе → Виджеты → «Алёша — большая кнопка» → растянуть.
+
+**Tecno / Infinix:** включите автозапуск, батарея «Без ограничений», закрепите приложение в недавних (замок).
+
+**Xiaomi / Poco / Redmi:** в разделе Xiaomi настройки включите «Всплывающие окна в фоне», «Экран блокировки» и «Автозапуск», батарея «Нет ограничений». Счётчик «услышано / открылось» показывает, где теряется «Алёша».
+
+**Советы:**
+- Подписывайте контакты коротко: «Дочь», «Сын Андрей». В настройке видно, какие распознаются.
+- Отключите блокировку экрана.
+- «Алёша» постоянно слушается и расходует батарею. Можно оставить только «в отбое».
+- Погода берётся из Open-Meteo, нужны интернет и геолокация.
+
+---
+
+## English
+
+### How to use
+
+- **Press the side button** (the screen turns on) → a greeting and a beep, then speak.
+- **Tap anywhere** on the screen or **tap the widget** → a beep, then speak.
+- **Say "Alyosha"** or **"Alex"** → "Yes, I'm listening", even with the screen off.
+- Every command is confirmed with a sound and a vibration.
+
+### Commands (English mode)
+
+| Say | What happens |
+|---|---|
+| "call my daughter", "call Andrew" | "Call Daughter? Say yes or no" → "yes" → dials |
+| "time", "what time is it" | "It's 3:20 PM." |
+| "what's the date", "what day is it" | "Today is Sunday, November 1." |
+| "weather" | weather now and in the next 1–2 hours |
+| "weather tomorrow", "weather the day after tomorrow" | the day's forecast: temperature range, precipitation, strong wind |
+| "take a note" | "What should I write down?" → "When?" → "Is that right?" |
+| "what do I have today", "what do I have tomorrow", "my notes" | reads your notes |
+| "delete a note" | offers notes one by one for deletion |
+| "repeat" | repeats the last answer |
+| "help" | lists the commands |
+| "rest" | minimizes; no greeting on screen-on |
+| "Alyosha", "Alex" | wakes the assistant |
+
+### Incoming calls
+
+A full-screen card announces the caller by name.
+- **Answer:** say "answer" or "pick up", or tap the screen.
+- **Decline:** say "decline" or "hang up".
+
+The ringtone is lowered while the assistant listens and restored afterwards.
+
+### Reminders
+
+24, 6, 3 and 1 hour before an event, each repeated every 5 minutes until the screen is turned on.
+
+### Screen
+
+A large clock and date, plus a big colored circle:
+- breathing amber — speak now;
+- green — heard you;
+- light — the assistant is speaking;
+- a moon — resting.
+
+**Widget:** a half-screen or full-screen button with the clock and date; tapping it starts listening right away.
+
+### Language
+
+Russian, English or Chinese, chosen in setup. Everything follows the choice: on-screen text, the assistant's voice and voice commands.
+
+### Installation
+
+1. Download and install `granpa-phone.apk` (allow installs from this source).
+2. Open the app; the setup screen appears. Tap every amber tile until it turns green.
+3. Under "Assistant voice", pick a calm voice.
+4. To reopen setup later, **hold a finger on the main screen for 5 seconds**.
+5. Widget: long-press the home screen → Widgets → "Alyosha — big button", then resize it.
+
+**Tecno / Infinix:** turn on Autostart, set battery to No restrictions, and lock the app in recent apps.
+
+**Xiaomi / Poco / Redmi:** in the Xiaomi section of setup, allow pop-up windows in the background, showing on the lock screen and autostart, and set battery to No restrictions. The heard/opened counter shows where the wake word gets lost.
+
+**Tips:**
+- Keep contact names short. Setup shows which ones are recognized.
+- Turn off the screen lock.
+- Always listening for the wake word uses battery; you can limit it to rest mode.
+- Weather comes from Open-Meteo and needs internet and location.
+
+---
+
+## 中文
+
+### 使用方法
+
+- **按侧键**（屏幕亮起）→ 问候和提示音，然后说话。
+- **点击屏幕**任意位置或**点击小部件** → 提示音，然后说话。
+- **说「阿廖沙」**或**「小助手」** → 「在，我在听」，熄屏时也可以。
+- 每条命令都有声音和振动确认。
+
+### 命令（中文模式）
+
+| 说 | 结果 |
+|---|---|
+| 「给女儿打电话」 | 「给女儿打电话吗？请说是或者不是」→「是」→ 拨号 |
+| 「几点了」 | 「现在是15点20分。」 |
+| 「今天几号」「星期几」 | 「今天是11月1日，星期日。」 |
+| 「天气」 | 现在及未来1–2小时的天气 |
+| 「明天天气」「后天天气」 | 当天预报：气温范围、降水、大风 |
+| 「记一下」 | 「要记什么？」→「什么时候？」→「对吗？」 |
+| 「今天有什么安排」「明天有什么安排」「我的记录」 | 朗读记录 |
+| 「删除记录」 | 逐条询问是否删除 |
+| 「重复」 | 重复上一个回答 |
+| 「帮助」 | 列出命令 |
+| 「休息」 | 最小化，亮屏时不再问候 |
+| 「阿廖沙」「小助手」 | 唤醒助手 |
+
+### 来电
+
+全屏显示来电人姓名并朗读。
+- **接听：** 说「接听」或点击屏幕。
+- **挂断：** 说「挂断」或「不接」。
+
+助手聆听时铃声会调低，之后恢复。
+
+### 提醒
+
+在事件前24小时、6小时、3小时和1小时提醒，每次提醒每5分钟重复一次，直到点亮屏幕。
+
+### 屏幕
+
+大号时钟和日期，中间是彩色状态圆圈：
+- 黄色呼吸 — 请说话；
+- 绿色 — 已听到；
+- 浅色 — 助手正在说话；
+- 月亮 — 休息中。
+
+**小部件：** 半屏或全屏的大按钮，显示时钟和日期，点击后助手立即开始聆听。
+
+### 语言
+
+在设置中选择俄语、英语或中文。屏幕文字、助手语音和语音命令全部随之切换。
+
+### 安装
+
+1. 下载并安装 `granpa-phone.apk`（允许从此来源安装）。
+2. 打开应用，进入设置界面。点击每个黄色方块，直到全部变绿。
+3. 在「助手语音」中选择平静的声音。
+4. 之后在主屏幕上**按住5秒**即可再次打开设置。
+5. 小部件：长按桌面 → 小部件 →「阿廖沙 — 大按钮」，然后调整大小。
+
+**Tecno / Infinix：** 开启自启动，电池设为无限制，并在最近任务中锁定应用。
+
+**小米 / Poco / 红米：** 在设置的小米部分开启「后台弹出界面」「锁屏显示」和「自启动」，电池设为无限制。「听到 / 打开」计数可显示唤醒词在哪一步丢失。
+
+**提示：**
+- 联系人名称越短越好。设置中可以看到哪些能被识别。
+- 关闭锁屏。
+- 始终监听唤醒词会耗电，可以改为仅在休息时监听。
+- 天气来自 Open-Meteo，需要网络和定位。
+
+---
 
 ## Tech
 
-Kotlin, no UI framework (plain Android views). Offline speech recognition with [Vosk](https://alphacephei.com/vosk/) (small Russian, English and Chinese models) using a restricted grammar of commands and contact names for accuracy. Text-to-speech uses the system TTS engine. GitHub Actions builds the APK on every push to `main` and publishes it to Releases.
+Kotlin with plain Android views, no UI framework. Offline speech recognition uses [Vosk](https://alphacephei.com/vosk/) with small Russian, English and Chinese models; Russian and English listen against a restricted grammar of commands and contact names for accuracy, Chinese uses free recognition with substring matching. Speech output uses the system text-to-speech engine. Weather comes from [Open-Meteo](https://open-meteo.com/). GitHub Actions builds the APK on every push to `main` and publishes it to Releases.
