@@ -58,14 +58,16 @@ class KeeperService : Service() {
             val ears = App.instance.ears
             ears.whenReady {
                 if (!shouldWakeListen()) { setWakeListening(false); return@whenReady }
-                val grammar = Sleep.WAKE_PHRASES.mapNotNull { ears.fixPhrase(it) }
-                if (grammar.isEmpty()) { setWakeListening(false); return@whenReady }
+                val phr = Phrases.of(this@KeeperService)
+                // Для китайского слушаем свободно: «阿廖沙» может не быть в словаре модели.
+                val grammar = if (phr.useGrammar) phr.wakePhrases.mapNotNull { ears.fixPhrase(it) } else null
+                if (grammar != null && grammar.isEmpty()) { setWakeListening(false); return@whenReady }
                 setWakeListening(true)
                 // Реагируем уже на промежуточный результат: быстрее и надёжнее, чем ждать паузы.
-                val isWake = { t: String -> Ru.words(t).any { it in Sleep.WAKE_WORDS } }
+                val isWake = { t: String -> phr.isWake(t) }
                 ears.listen(grammar, 10 * 60_000, partial = isWake) { text ->
                     if (!shouldWakeListen()) { setWakeListening(false); return@listen }
-                    val heard = Ru.words(text ?: "").any { it in Sleep.WAKE_WORDS }
+                    val heard = text != null && phr.isWake(text)
                     if (heard) wakeByVoice() else handler.postDelayed(this, 150)
                 }
             }
@@ -120,7 +122,7 @@ class KeeperService : Service() {
                 return
             } catch (_: Exception) {}
         }
-        App.instance.speaker.say("Слушаю. Коснитесь экрана, чтобы сказать команду.")
+        App.instance.speaker.say(Phrases.of(this).tapWhenReady)
         startWakeLoop(4000)
     }
 
@@ -128,7 +130,7 @@ class KeeperService : Service() {
         override fun run() {
             if (callState != TelephonyManager.CALL_STATE_RINGING) return
             // Экран звонка сам говорит и слушает; озвучиваем только если его не видно.
-            if (!IncomingActivity.visible) App.instance.speaker.say("Звонит: $ringName")
+            if (!IncomingActivity.visible) App.instance.speaker.say(Phrases.of(this@KeeperService).ringing(ringName))
             handler.postDelayed(this, 5000)
         }
     }

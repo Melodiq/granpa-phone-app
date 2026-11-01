@@ -4,14 +4,16 @@ import android.content.Intent
 import android.net.Uri
 import java.util.Calendar
 
-/** Голосовой диалог: команды, звонки, время, погода, ежедневник. */
+/** Голосовой диалог: команды, звонки, время, погода, ежедневник. Язык — из [Phrases]. */
 class Assistant(private val act: MainActivity) {
 
     private val sp get() = App.instance.speaker
     private val ears get() = App.instance.ears
+    private val phr get() = Phrases.of(act)
 
     private var people: List<Person> = emptyList()
     private var grammar: List<String>? = null
+    private var grammarLang = ""
     private var lastAnswer: String? = null
 
     /** Счётчик диалога: всё, что пришло от старого диалога после нажатия на экран, игнорируем. */
@@ -39,9 +41,9 @@ class Assistant(private val act: MainActivity) {
         val m = ears.model
         if (m == null) {
             if (ears.error != null) {
-                say("Распознавание речи не загрузилось. Попросите родных переустановить приложение.")
+                say(phr.asrBroken)
             } else {
-                say("Секунду, я ещё загружаюсь.") {
+                say(phr.loading) {
                     ears.whenReady { if (s == session) listen(grammar, timeoutMs, cb) }
                 }
             }
@@ -76,9 +78,8 @@ class Assistant(private val act: MainActivity) {
     fun greet() {
         stopAll()
         val rem = Reminders.take(act)
-        val text = "Здравствуйте. " + (rem?.let { "$it " } ?: "") + "Слушаю."
         if (rem != null) lastAnswer = rem
-        say(text) { listenCommand(0) }
+        say(phr.greet(rem)) { listenCommand(0) }
     }
 
     /** Разбудили словом «Алёша» или касанием во сне. */
@@ -86,7 +87,7 @@ class Assistant(private val act: MainActivity) {
         stopAll()
         val rem = Reminders.take(act)
         if (rem != null) lastAnswer = rem
-        say("Да, слушаю." + (rem?.let { " $it" } ?: "")) { listenCommand(0) }
+        say(phr.wakeGreet(rem)) { listenCommand(0) }
     }
 
     /** Нажали на экран: сразу слушаем, без лишних слов. */
@@ -98,81 +99,71 @@ class Assistant(private val act: MainActivity) {
     private fun listenCommand(attempt: Int) {
         listen(commandGrammar(), 8000) { text ->
             if (text == null) {
-                if (attempt == 0) say("Не расслышал. Повторите.") { listenCommand(1) }
-                else say("Коснитесь экрана, когда захотите что-то сказать.")
+                if (attempt == 0) say(phr.notHeardRepeat) { listenCommand(1) }
+                else say(phr.tapWhenReady)
             } else {
                 handle(text, attempt)
             }
         }
     }
 
-    // ---------- грамматика: список фраз, которые понимаем ----------
+    // ---------- грамматика ----------
 
-    private val basePhrases = listOf(
-        "время", "который час", "сколько времени", "какое время", "скажи время",
-        "погода", "какая погода", "какая сейчас погода", "погоду", "что с погодой", "что на улице",
-        "запиши", "записать", "напомни", "запись", "ежедневник", "сделай запись", "новая запись",
-        "что у меня сегодня", "что у меня завтра", "что сегодня", "что завтра", "мои записи", "какие дела", "мои дела",
-        "удали запись", "удалить запись", "удали",
-        "какое сегодня число", "какой сегодня день", "какое число", "дата", "какая дата", "какая сегодня дата",
-        "какой день недели", "какой сегодня день недели", "день недели", "какой день", "число", "сегодня",
-        "какое сегодня", "какое число сегодня", "какой сегодня день и число", "скажи число", "скажи день недели",
-        "повтори", "еще раз", "помощь", "что ты умеешь", "отмена", "стоп", "нет", "да",
-        "отбой", "спать", "отдыхай", "отдохни", "иди спать",
-        "позвонить", "позвони", "набери", "звонок"
-    )
-
-    private val callVerbs = listOf("позвони", "позвонить", "набери", "звони", "вызови", "позвоните")
-
-    private fun commandGrammar(): List<String> {
-        grammar?.let { return it }
+    private fun commandGrammar(): List<String>? {
+        val p = phr
+        if (!p.useGrammar) return null
+        if (grammarLang == p.code) grammar?.let { return it }
         val out = LinkedHashSet<String>()
-        fun addIfKnown(p: String) {
-            ears.fixPhrase(p)?.let { out.add(it) }
+        fun addIfKnown(s: String) {
+            ears.fixPhrase(s)?.let { out.add(it) }
         }
-        basePhrases.forEach { addIfKnown(it) }
-        for (p in people) {
-            val forms = p.forms + p.nameWords.joinToString(" ")
+        p.basePhrases.forEach { addIfKnown(it) }
+        for (person in people) {
+            val forms = person.forms + person.nameWords.joinToString(" ")
             for (f in forms) {
                 if (f.isBlank()) continue
                 addIfKnown(f)
-                callVerbs.forEach { v -> addIfKnown("$v $f") }
+                p.callVerbs.forEach { v -> addIfKnown("$v $f") }
+                if (p.code == "en") addIfKnown("call my $f")
             }
         }
         val g = out.toList()
         grammar = g
+        grammarLang = p.code
         return g
+    }
+
+    private fun smallGrammar(list: List<String>): List<String>? {
+        if (!phr.useGrammar || list.isEmpty()) return null
+        return list.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null }
     }
 
     // ---------- разбор команды ----------
 
-    private fun has(words: List<String>, vararg keys: String) = keys.any { it in words }
-
     private fun handle(text: String, attempt: Int) {
-        val w = Ru.words(text)
-        when {
-            w.any { it in Sleep.SLEEP_WORDS } -> say("Отбой. Чтобы позвать меня, скажите: Алёша.") { act.goToSleep() }
-            has(w, "отмена", "стоп") -> say("Хорошо.")
-            has(w, "повтори") || (has(w, "еще") && has(w, "раз")) -> say(lastAnswer ?: "Пока нечего повторять.")
-            has(w, "помощь", "умеешь") -> answer(HELP)
-            has(w, "удали", "удалить") -> deleteFlow(Diary.all(act), 0)
-            has(w, "запиши", "записать", "напомни", "ежедневник") ||
-                (has(w, "запись") && !has(w, "удали", "удалить")) -> noteWhat(0)
-            has(w, "записи", "дела") -> listNotes(null)
-            has(w, "что") && has(w, "сегодня") -> listNotes(0)
-            has(w, "что") && has(w, "завтра") -> listNotes(1)
-            has(w, "погода", "погоду", "погодой", "улице") -> weather()
-            has(w, "число", "дата", "недели", "числа") ||
-                (has(w, "день") && has(w, "какой", "сегодня", "скажи")) ||
-                w == listOf("сегодня") || w == listOf("какое", "сегодня") -> answer(dateText())
-            has(w, "время", "времени", "час") -> answer(timeText())
-            else -> {
-                val cands = Contacts.match(people, text)
+        val p = phr
+        when (p.command(text)) {
+            Cmd.SLEEP -> say(p.sleepAnnounce) { act.goToSleep() }
+            Cmd.CANCEL -> say(p.ok)
+            Cmd.REPEAT -> say(lastAnswer ?: p.nothingToRepeat)
+            Cmd.HELP -> answer(p.help)
+            Cmd.DELETE -> deleteFlow(Diary.all(act), 0)
+            Cmd.NOTE -> noteWhat(0)
+            Cmd.LIST_ALL -> listNotes(null)
+            Cmd.LIST_TODAY -> listNotes(0)
+            Cmd.LIST_TOMORROW -> listNotes(1)
+            Cmd.WEATHER_NOW -> weather(null)
+            Cmd.WEATHER_TOMORROW -> weather(1)
+            Cmd.WEATHER_AFTER -> weather(2)
+            Cmd.DATE -> answer(p.dateText(Calendar.getInstance()))
+            Cmd.TIME -> answer(p.timeText(Calendar.getInstance()))
+            Cmd.CALL_VERB, Cmd.NONE -> {
+                val cands = Contacts.match(people, text, p)
                 when {
                     cands.isNotEmpty() -> confirmCall(cands, 0)
-                    has(w, *callVerbs.toTypedArray(), "звонок") -> say("Кому позвонить?") { listenCommand(0) }
-                    attempt == 0 -> say("Не понял. Скажите, например: позвони дочери. Или: время. Или: погода.") { listenCommand(1) }
-                    else -> say("Не понял. Скажите «помощь», чтобы услышать, что я умею.")
+                    p.command(text) == Cmd.CALL_VERB -> say(p.whomToCall) { listenCommand(0) }
+                    attempt == 0 -> say(p.notUnderstoodHint) { listenCommand(1) }
+                    else -> say(p.notUnderstoodHelp)
                 }
             }
         }
@@ -182,72 +173,58 @@ class Assistant(private val act: MainActivity) {
 
     private fun confirmCall(cands: List<Person>, i: Int) {
         if (i >= cands.size) {
-            say("Хорошо. Кому позвонить?") { listenCommand(0) }
+            say(phr.okWhomToCall) { listenCommand(0) }
             return
         }
-        val p = cands[i]
-        say("Позвонить: ${p.name}? Скажите да или нет.") {
+        val person = cands[i]
+        say(phr.confirmCall(person.name)) {
             askYesNo { yes ->
                 when (yes) {
-                    true -> call(p)
+                    true -> call(person)
                     false -> confirmCall(cands, i + 1)
-                    null -> say("Не расслышал. Не звоню.")
+                    null -> say(phr.notHeardNoCall)
                 }
             }
         }
     }
 
-    private fun call(p: Person) {
-        say("Звоню: ${p.name}") {
+    private fun call(person: Person) {
+        say(phr.calling(person.name)) {
             try {
                 act.startActivity(
-                    Intent(Intent.ACTION_CALL, Uri.parse("tel:" + Uri.encode(p.number)))
+                    Intent(Intent.ACTION_CALL, Uri.parse("tel:" + Uri.encode(person.number)))
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
             } catch (e: Exception) {
-                say("Не получилось позвонить. Попросите родных проверить разрешения.")
+                say(phr.callFailed)
             }
         }
     }
 
-    private val yesNoGrammar = listOf(
-        "да", "нет", "верно", "правильно", "не верно", "неверно", "неправильно", "не правильно",
-        "конечно", "давай", "звони", "звоните", "отмена", "стоп", "не надо", "не"
-    )
-
     private fun askYesNo(attempt: Int = 0, cb: (Boolean?) -> Unit) {
-        listen(yesNoGrammar.mapNotNull { ears.fixPhrase(it) }, 6000) { text ->
-            val w = text?.let { Ru.words(it) } ?: emptyList()
-            val ans: Boolean? = when {
-                w.isEmpty() -> null
-                has(w, "нет", "не", "неверно", "неправильно", "отмена", "стоп") -> false
-                has(w, "да", "верно", "правильно", "конечно", "давай", "звони", "звоните") -> true
-                else -> null
-            }
-            if (ans == null && attempt == 0) say("Скажите да или нет.") { askYesNo(1, cb) }
+        listen(smallGrammar(phr.yesNoPhrases), 6000) { text ->
+            val ans = text?.let { phr.yesNo(it) }
+            if (ans == null && attempt == 0) say(phr.sayYesNo) { askYesNo(1, cb) }
             else cb(ans)
         }
     }
 
-    // ---------- время, дата, погода ----------
+    // ---------- погода ----------
 
-    private fun timeText(): String {
-        val c = Calendar.getInstance()
-        return "Сейчас " + Ru.clock(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE)) + "."
-    }
-
-    private fun dateText(): String {
-        val c = Calendar.getInstance()
-        return "Сегодня " + Ru.weekdayName(c.get(Calendar.DAY_OF_WEEK)) + ", " +
-            Ru.dayMonth(c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH)) + "."
-    }
-
-    private fun weather() {
+    /** dayOffset: null — сейчас и ближайшие часы, 1 — завтра, 2 — послезавтра. */
+    private fun weather(dayOffset: Int?) {
         val s = session
-        act.show("Узнаю погоду…")
-        sp.say("Узнаю погоду.")
-        Weather.get(act) { text ->
+        val p = phr
+        act.show(p.weatherChecking)
+        sp.say(p.weatherChecking)
+        Weather.get(act) { report ->
             if (s != session) return@get
+            val text = when {
+                report.error != null -> p.weatherError(report.error)
+                dayOffset == null -> report.now?.let { p.weatherNow(it) } ?: p.weatherError(WeatherError.SERVER)
+                else -> report.days.firstOrNull { it.offset == dayOffset }?.let { p.weatherDay(it) }
+                    ?: p.weatherError(WeatherError.SERVER)
+            }
             lastAnswer = text
             act.show(text)
             sp.say(text, flush = false) { if (s == session) act.setState(LampState.IDLE) }
@@ -257,48 +234,40 @@ class Assistant(private val act: MainActivity) {
     // ---------- ежедневник ----------
 
     private fun noteWhat(attempt: Int) {
-        val q = if (attempt == 0) "Что записать? Говорите после сигнала." else "Не расслышал. Что записать?"
-        say(q) {
+        say(if (attempt == 0) phr.noteWhat else phr.noteWhatAgain) {
             listen(null, 15000) { text ->
                 when {
                     text != null -> noteWhen(text, 0)
                     attempt == 0 -> noteWhat(1)
-                    else -> say("Запись отменена.")
+                    else -> say(phr.noteCancelled)
                 }
             }
         }
     }
 
     private fun noteWhen(what: String, attempt: Int) {
-        val q = when (attempt) {
-            0 -> "Когда? Скажите день и время."
-            else -> "Не понял время. Скажите, например: завтра в десять утра."
-        }
-        say(q) {
+        say(if (attempt == 0) phr.noteWhen else phr.noteWhenExample) {
             listen(null, 10000) { text ->
-                val time = text?.let { RuDate.parse(it) }
+                val time = text?.let { phr.parseTime(it) }
                 when {
                     time != null -> noteConfirm(what, time)
                     attempt < 2 -> noteWhen(what, attempt + 1)
-                    else -> say("Не получилось понять время. Запись отменена.")
+                    else -> say(phr.noteTimeFailed)
                 }
             }
         }
     }
 
     private fun noteConfirm(what: String, time: Long) {
-        say("Записываю: $what, ${RuDate.describe(time)}. Верно?") {
+        say(phr.noteConfirm(what, time)) {
             askYesNo { yes ->
                 when (yes) {
                     true -> {
                         val note = Diary.add(act, what, time)
-                        val n = Diary.upcomingReminders(note)
-                        val tail = if (n == 0) "До этого меньше часа, напомнить заранее не успею."
-                        else "Напомню заранее."
-                        say("Записал. $tail")
+                        say(phr.noteSaved(Diary.upcomingReminders(note) > 0))
                     }
                     false -> noteWhen(what, 0)
-                    null -> say("Не расслышал. Запись отменена.")
+                    null -> say(phr.noteNotHeardCancelled)
                 }
             }
         }
@@ -312,40 +281,21 @@ class Assistant(private val act: MainActivity) {
             val c = Calendar.getInstance().apply { timeInMillis = it.time }
             RuDate.daysBetween(now, c) == dayOffset
         }
-        val dayWord = when (dayOffset) { 0 -> "сегодня"; 1 -> "завтра"; else -> "" }
-        val text = when {
-            list.isEmpty() && dayOffset == null -> "Записей нет."
-            list.isEmpty() -> "На $dayWord записей нет."
-            else -> {
-                val head = if (dayOffset == null) "Ближайшие записи. " else "${dayWord.replaceFirstChar { it.uppercase() }}. "
-                head + list.joinToString(". ") { Diary.describe(it) } + "."
-            }
-        }
-        answer(text)
+        answer(phr.notesList(dayOffset, list))
     }
 
     private fun deleteFlow(notes: List<Note>, i: Int) {
-        if (notes.isEmpty()) { say("Записей нет."); return }
-        if (i >= notes.size) { say("Больше записей нет. Ничего не удалено."); return }
+        if (notes.isEmpty()) { say(phr.noNotes); return }
+        if (i >= notes.size) { say(phr.noMoreNotes); return }
         val n = notes[i]
-        say("Удалить: ${Diary.describe(n)}? Скажите да или нет.") {
+        say(phr.deleteAsk(n)) {
             askYesNo { yes ->
                 when (yes) {
-                    true -> { Diary.remove(act, n.id); say("Удалил.") }
+                    true -> { Diary.remove(act, n.id); say(phr.deleted) }
                     false -> deleteFlow(notes, i + 1)
-                    null -> say("Не расслышал. Ничего не удаляю.")
+                    null -> say(phr.notHeardNoDelete)
                 }
             }
         }
-    }
-
-    companion object {
-        const val HELP = "Я умею звонить: скажите, например, позвони дочери. " +
-            "Сказать время: скажите время. Сказать дату: какое сегодня число. " +
-            "Рассказать погоду: скажите погода. " +
-            "Записать дело: скажите запиши. Рассказать дела: что у меня сегодня, или что у меня завтра. " +
-            "Удалить запись: скажите удали запись. Повторить последний ответ: скажите повтори. " +
-            "Чтобы я отдохнул, скажите: отбой. Чтобы позвать снова, скажите: Алёша. " +
-            "Чтобы сказать команду, нажмите в любом месте экрана."
     }
 }

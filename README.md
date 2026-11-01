@@ -14,6 +14,7 @@ Android-приложение для почти незрячего пожилог
 | «время», «который час» | «Сейчас пятнадцать часов двадцать минут» |
 | «какое сегодня число», «какой день недели», «дата» | «Сегодня воскресенье, первое ноября» |
 | «погода» | погода сейчас и через 1–2 часа (нужен интернет) |
+| «погода на завтра», «погода послезавтра» | прогноз на день: от … до … градусов, осадки, сильный ветер |
 | «запиши» | «Что записать?» → «Когда?» → «Записываю… Верно?» |
 | «что у меня сегодня / завтра», «мои записи» | читает записи |
 | «удали запись» | по очереди предлагает записи на удаление |
@@ -27,8 +28,8 @@ Android-приложение для почти незрячего пожилог
 - **Обратная связь:** после каждой команды звук и вибрация, на экране цветной круг: жёлтый дышит — говорите, зелёный — услышал, луна — отдыхает.
 - **Виджет:** большая кнопка на пол-экрана или весь экран (часы, дата, «Алёша»). Нажатие — помощник сразу слушает.
 - **Голос:** спокойный, мужской по умолчанию; любой скачанный русский голос можно выбрать в настройке.
-- **Погода:** из Яндекс.Погоды, если в настройке введён ключ API; иначе Open-Meteo, запасной — met.no.
-- **Язык интерфейса:** русский, английский или китайский (в настройке). Речь и голосовые команды — на русском.
+- **Погода:** только Open-Meteo — сейчас, через 1–2 часа, завтра и послезавтра.
+- **Язык:** русский, английский или китайский (в настройке). Меняется всё: надписи, голос помощника и голосовые команды. Слово пробуждения: «Алёша» / «Alyosha», «Alex» / «阿廖沙».
 - Регистр и падежи не важны: «Дочь», «дочь», «дочери», «дочке» — один контакт.
 
 ## Установка
@@ -65,7 +66,7 @@ Android-приложение для почти незрячего пожилог
 
 # Alesha voice assistant
 
-An Android app for an elderly person who is almost blind. Everything works by voice, and speech recognition runs **fully offline**. The interface and speech are in Russian.
+An Android app for an elderly person who is almost blind. Everything works by voice, and speech recognition runs **fully offline**. It speaks and understands Russian, English and Chinese.
 
 ## Features
 
@@ -77,6 +78,7 @@ An Android app for an elderly person who is almost blind. Everything works by vo
 | "время" (time) | says the current time |
 | "какое сегодня число", "какой день недели" (date, weekday) | says the weekday and date |
 | "погода" (weather) | weather now and for the next 1–2 hours (needs internet) |
+| "погода на завтра" / "послезавтра" | forecast for tomorrow or the day after |
 | "запиши" (take a note) | asks what and when, confirms, then reminds |
 | "что у меня сегодня / завтра" | reads today's or tomorrow's notes |
 | "удали запись" | offers notes one by one for deletion |
@@ -90,8 +92,8 @@ An Android app for an elderly person who is almost blind. Everything works by vo
 - **Feedback:** a sound and vibration after every command, plus a large colored circle: breathing amber means "speak", green means "heard", a moon means resting.
 - **Widget:** a half-screen or full-screen button with a clock and date; tapping it starts listening right away.
 - **Voice:** a calm male voice by default; any installed offline Russian voice can be picked in setup.
-- **Weather:** Yandex Weather when an API key is entered in setup, otherwise Open-Meteo with met.no as a backup.
-- **Interface language:** Russian, English or Chinese (in setup). Speech and voice commands stay in Russian.
+- **Weather:** Open-Meteo only — now, in 1–2 hours, tomorrow and the day after.
+- **Languages:** Russian, English or Chinese, switched in setup. Everything follows the choice: on-screen text, the assistant's voice and voice commands (e.g. "call my daughter", "weather tomorrow", "给女儿打电话", "明天天气"). Wake word: "Alyosha" or "Alex" in English, "阿廖沙" in Chinese.
 - Contact matching ignores letter case and Russian word endings, so "Дочь", "дочери" and "дочке" all match the same contact.
 
 ## Installation
@@ -107,4 +109,4 @@ On Tecno / Infinix (HiOS), also enable **Autostart**, set battery to **No restri
 
 ## Tech
 
-Kotlin, no UI framework (plain Android views). Offline speech recognition with [Vosk](https://alphacephei.com/vosk/) (`vosk-model-small-ru-0.22`) using a restricted grammar of commands and contact names for accuracy. Text-to-speech uses the system TTS engine. GitHub Actions builds the APK on every push to `main` and publishes it to Releases.
+Kotlin, no UI framework (plain Android views). Offline speech recognition with [Vosk](https://alphacephei.com/vosk/) (small Russian, English and Chinese models) using a restricted grammar of commands and contact names for accuracy. Text-to-speech uses the system TTS engine. GitHub Actions builds the APK on every push to `main` and publishes it to Releases.

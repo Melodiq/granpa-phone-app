@@ -19,25 +19,35 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Кэш модели распознавания
+      - name: Кэш моделей распознавания
         id: model-cache
         uses: actions/cache@v4
         with:
-          path: model-ru
-          key: vosk-model-small-ru-0.22
+          path: models
+          key: vosk-models-ru022-en015-cn022
 
-      - name: Скачать модель Vosk (русский, офлайн)
+      - name: Скачать модели Vosk (русский, английский, китайский — офлайн)
         if: steps.model-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL -o model.zip https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
-          unzip -q model.zip
+          mkdir -p models && cd models
+          for m in vosk-model-small-ru-0.22 vosk-model-small-en-us-0.15 vosk-model-small-cn-0.22; do
+            curl -sSL -o "$m.zip" "https://alphacephei.com/vosk/models/$m.zip"
+            unzip -q "$m.zip"
+            rm "$m.zip"
+          done
           mv vosk-model-small-ru-0.22 model-ru
+          mv vosk-model-small-en-us-0.15 model-en
+          mv vosk-model-small-cn-0.22 model-zh
 
-      - name: Положить модель в assets
+      - name: Положить модели в assets
         run: |
           mkdir -p app/src/main/assets
-          cp -r model-ru app/src/main/assets/model-ru
+          for l in ru en zh; do
+            cp -r "models/model-$l" "app/src/main/assets/model-$l"
+          done
           echo "small-ru-0.22" > app/src/main/assets/model-ru/uuid
+          echo "small-en-us-0.15" > app/src/main/assets/model-en/uuid
+          echo "small-cn-0.22" > app/src/main/assets/model-zh/uuid
 
       - uses: gradle/actions/setup-gradle@v4
         with:

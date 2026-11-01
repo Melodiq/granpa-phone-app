@@ -8,12 +8,12 @@
     <string name="setup_title">Настройка помощника</string>
     <string name="setup_intro">Для родственников. Нажмите на каждую жёлтую плашку и разрешите. Зелёная рамка с галочкой — готово.</string>
     <string name="lang_title">Язык интерфейса</string>
-    <string name="lang_note">Голосовые команды и речь помощника остаются на русском.</string>
+    <string name="lang_note">Язык меняет всё: надписи, речь помощника и голосовые команды. После смены первая загрузка распознавания — до минуты.</string>
     <string name="step_permissions">1. Разрешения: микрофон, контакты, звонки, ответ на звонки, геолокация</string>
     <string name="step_overlay">2. Показ поверх других окон (приветствие при нажатии боковой кнопки и ответ на звонок голосом)</string>
     <string name="step_battery">3. Батарея: без ограничений (иначе система выключит помощника)</string>
     <string name="step_alarms">4. Точные напоминания</string>
-    <string name="step_tts">5. Русский голос. Если галочки нет — установите голос в настройках синтеза речи (Google)</string>
+    <string name="step_tts">5. Голос для выбранного языка. Если галочки нет — установите голос в настройках синтеза речи (Google)</string>
     <string name="asr_ready">✓ 6. Распознавание речи готово (работает без интернета)</string>
     <string name="asr_error" formatted="true">✗ 6. Распознавание речи: ошибка — %1$s</string>
     <string name="asr_loading">… 6. Распознавание речи загружается (первый запуск до минуты)</string>
@@ -29,10 +29,7 @@
     <string name="lockscreen_tip">Совет: отключите блокировку экрана (Настройки → Безопасность → Блокировка экрана → Нет), чтобы ничего не нужно было смахивать.</string>
     <string name="test_voice">Проверить голос</string>
     <string name="weather_title">Погода</string>
-    <string name="weather_openmeteo">Сейчас погода берётся из Open-Meteo. Чтобы брать из Яндекса, вставьте ключ API Яндекс.Погоды (yandex.ru/dev/weather → личный кабинет → ключ).</string>
-    <string name="weather_yandex">Погода берётся из Яндекса. Если Яндекс не ответит — из Open-Meteo.</string>
-    <string name="weather_key_hint">Ключ API Яндекс.Погоды</string>
-    <string name="weather_save">Сохранить ключ и проверить погоду</string>
+    <string name="weather_openmeteo">Погода берётся из Open-Meteo: сейчас, через 1–2 часа, завтра и послезавтра. Нужен интернет и геолокация.</string>
     <string name="weather_error" formatted="true">Последняя ошибка погоды: %1$s</string>
     <string name="wake_title">Слово «Алёша»</string>
     <string name="wake_always">Слушать «Алёша» всегда, когда помощник не на экране (нажмите, чтобы только в отбое)</string>
@@ -42,8 +39,8 @@
     <string name="wake_stats_note">Если «услышано» меньше, чем вы звали, — системе не нравится микрофон в фоне (батарея, разрешения Xiaomi). Если «открылся» меньше, чем «услышано», — система не даёт открыть окно (Xiaomi: всплывающие окна в фоне).</string>
     <string name="wake_stats_reset">Сбросить счётчик</string>
     <string name="voice_title">Голос помощника</string>
-    <string name="voice_none">Скачанных русских голосов нет. Нажмите пункт 5 и скачайте русский голос в настройках Google.</string>
-    <string name="voice_note">Нажмите на голос — он скажет фразу и станет голосом помощника. Выберите спокойный мужской. Если мужского нет: пункт 5 → Русский → скачайте ещё голоса.</string>
+    <string name="voice_none">Скачанных голосов для этого языка нет. Нажмите пункт 5 и скачайте голос в настройках Google.</string>
+    <string name="voice_note">Нажмите на голос — он скажет фразу и станет голосом помощника. Выберите спокойный мужской. Если мужского нет: пункт 5 → язык → скачайте ещё голоса.</string>
     <string name="voice_item" formatted="true">Голос %1$d</string>
     <string name="voice_selected"> — выбран</string>
     <string name="contacts_title" formatted="true">Контакты (%1$d)</string>
@@ -65,4 +62,5 @@
     <string name="notif_channel">Помощник Алёша</string>
     <string name="notif_on">Помощник Алёша работает</string>
     <string name="notif_sleep">Алёша отдыхает. Позовите: «Алёша»</string>
+    <string name="weather_check">Проверить погоду</string>
 </resources>

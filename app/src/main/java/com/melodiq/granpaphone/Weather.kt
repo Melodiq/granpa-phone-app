@@ -14,12 +14,33 @@ import java.net.URL
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/** Погода сейчас и на 1–2 часа вперёд (Open-Meteo, бесплатно, без ключа). Нужен интернет. */
+data class WeatherHour(val temp: Int, val code: Int, val prob: Int)
+
+data class WeatherNow(
+    val temp: Int,
+    val code: Int,
+    val wind: Int,
+    /** Через час и через два. */
+    val next: List<WeatherHour>
+) {
+    /** В ближайшие часы почти так же, как сейчас. */
+    val steady: Boolean
+        get() = next.size == 2 && next.all { it.code == code && Math.abs(it.temp - temp) <= 1 && it.prob < 40 }
+}
+
+/** offset: 0 — сегодня, 1 — завтра, 2 — послезавтра. */
+data class WeatherDay(val offset: Int, val min: Int, val max: Int, val code: Int, val prob: Int, val wind: Int)
+
+enum class WeatherError { NO_LOCATION, NO_INTERNET, SERVER }
+
+class WeatherReport(val now: WeatherNow?, val days: List<WeatherDay>, val error: WeatherError?)
+
+/** Погода только из Open-Meteo (бесплатно, без ключа): сейчас, 1–2 часа и на 3 дня. Нужен интернет. */
 object Weather {
 
     private val main = Handler(Looper.getMainLooper())
 
-    /** Последняя ошибка погоды — показывается на экране настройки, чтобы понять причину. */
+    /** Последняя ошибка — показывается на экране настройки, чтобы понять причину. */
     @Volatile var lastError: String? = null
 
     private fun describeError(e: Exception): String = e.javaClass.simpleName + (e.message?.let { " — " + it.take(120) } ?: "")
@@ -39,14 +60,12 @@ object Weather {
         }
     }
 
-    /** GET с понятной ошибкой при не-200 ответе. */
-    private fun httpGet(url: String, headers: Map<String, String> = emptyMap()): String {
+    private fun httpGet(url: String): String {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 8000
         conn.readTimeout = 8000
         conn.setRequestProperty("User-Agent", "PomoshnikAlesha/1.0 github.com/Melodiq/granpa-phone-app")
         conn.setRequestProperty("Accept", "application/json")
-        headers.forEach { (k, v) -> conn.setRequestProperty(k, v) }
         try {
             val code = conn.responseCode
             if (code !in 200..299) {
@@ -59,34 +78,20 @@ object Weather {
         }
     }
 
-    fun get(ctx: Context, cb: (String) -> Unit) {
+    fun get(ctx: Context, cb: (WeatherReport) -> Unit) {
         locate(ctx) { loc ->
             if (loc == null) {
-                cb("Не могу определить, где вы находитесь. Попросите родных включить геолокацию.")
+                cb(WeatherReport(null, emptyList(), WeatherError.NO_LOCATION))
                 return@locate
             }
             Thread {
-                val key = yandexKey(ctx)
-                var yandexErr: String? = null
-                val fromYandex = if (key.isNullOrBlank()) null else try {
-                    fetchYandex(loc.first, loc.second, key)
+                val report = try {
+                    fetch(loc.first, loc.second).also { lastError = null }
                 } catch (e: Exception) {
-                    yandexErr = "Яндекс: " + describeError(e)
-                    null
+                    lastError = "open-meteo: " + describeError(e)
+                    WeatherReport(null, emptyList(), if (online(ctx)) WeatherError.SERVER else WeatherError.NO_INTERNET)
                 }
-                val text = if (fromYandex != null) fromYandex else try {
-                    fetch(loc.first, loc.second).also { lastError = yandexErr }
-                } catch (e1: Exception) {
-                    lastError = (yandexErr?.let { "$it; " } ?: "") + "open-meteo: " + describeError(e1)
-                    try {
-                        fetchMetNo(loc.first, loc.second)
-                    } catch (e2: Exception) {
-                        lastError += "; met.no: " + describeError(e2)
-                        if (online(ctx)) "Сервер погоды сейчас не отвечает. Попробуйте позже."
-                        else "Нет интернета, погоду узнать не могу."
-                    }
-                }
-                main.post { cb(text) }
+                main.post { cb(report) }
             }.start()
         }
     }
@@ -114,7 +119,6 @@ object Weather {
             prefs.getString("lon", null)?.toDoubleOrNull()?.let { lon -> lat to lon }
         } ?: last?.let { it.latitude to it.longitude }
 
-        // Попробовать получить свежие координаты, но не дольше 6 секунд.
         val provider = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
             .firstOrNull { p -> try { lm?.isProviderEnabled(p) == true } catch (e: Exception) { false } }
         if (lm == null || provider == null) {
@@ -153,204 +157,54 @@ object Weather {
         }
     }
 
-    private fun fetch(lat: Double, lon: Double): String {
+    private fun fetch(lat: Double, lon: Double): WeatherReport {
         val url = String.format(
             Locale.US,
             "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
                 "&current=temperature_2m,weather_code,wind_speed_10m" +
                 "&hourly=temperature_2m,weather_code,precipitation_probability" +
-                "&forecast_hours=4&timezone=auto&wind_speed_unit=ms",
+                "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max" +
+                "&forecast_hours=4&forecast_days=3&timezone=auto&wind_speed_unit=ms",
             lat, lon
         )
         val j = JSONObject(httpGet(url))
+
         val cur = j.getJSONObject("current")
-        val t0 = cur.getDouble("temperature_2m").roundToInt()
-        val c0 = cur.getInt("weather_code")
-        val wind = cur.optDouble("wind_speed_10m", 0.0).roundToInt()
-
-        val sb = StringBuilder()
-        sb.append("Сейчас ").append(temp(t0)).append(", ").append(describe(c0))
-        if (wind >= 1) sb.append(", ветер ").append(Ru.num(wind)).append(" ").append(Ru.plural(wind, "метр", "метра", "метров")).append(" в секунду")
-        sb.append(". ")
-
         val hourly = j.getJSONObject("hourly")
         val temps = hourly.getJSONArray("temperature_2m")
         val codes = hourly.getJSONArray("weather_code")
         val probs = hourly.optJSONArray("precipitation_probability")
         // hourly[0] — текущий час, [1] — через час, [2] — через два
-        val labels = listOf("Через час", "Через два часа")
-        val parts = ArrayList<String>()
-        for (k in 1..2) {
-            if (k >= temps.length()) break
-            val t = temps.getDouble(k).roundToInt()
-            val c = codes.getInt(k)
-            var s = labels[k - 1] + ": " + temp(t) + ", " + describe(c)
-            val p = probs?.optInt(k, -1) ?: -1
-            if (p >= 40) s += ", вероятность осадков " + Ru.num(p) + " " + Ru.plural(p, "процент", "процента", "процентов")
-            parts.add(s)
+        val next = (1..2).filter { it < temps.length() }.map { k ->
+            WeatherHour(temps.getDouble(k).roundToInt(), codes.getInt(k), probs?.optInt(k, 0) ?: 0)
         }
-        val sameAsNow = parts.size == 2 && (1..2).all {
-            codes.getInt(it) == c0 && Math.abs(temps.getDouble(it).roundToInt() - t0) <= 1
-        }
-        if (sameAsNow) sb.append("В ближайшие два часа без изменений.") else sb.append(parts.joinToString(". ")).append(".")
-        lastError = null
-        return sb.toString()
-    }
-
-    // ---------- Яндекс.Погода (нужен ключ API, вводится на экране настройки) ----------
-
-    fun yandexKey(ctx: Context): String? =
-        ctx.getSharedPreferences("weather", Context.MODE_PRIVATE).getString("yandex_key", null)
-
-    fun setYandexKey(ctx: Context, key: String) {
-        ctx.getSharedPreferences("weather", Context.MODE_PRIVATE).edit().putString("yandex_key", key.trim()).apply()
-    }
-
-    private fun fetchYandex(lat: Double, lon: Double, key: String): String {
-        val url = String.format(
-            Locale.US,
-            "https://api.weather.yandex.ru/v2/forecast?lat=%.4f&lon=%.4f&lang=ru_RU&limit=2&hours=true&extra=false",
-            lat, lon
+        val now = WeatherNow(
+            cur.getDouble("temperature_2m").roundToInt(),
+            cur.getInt("weather_code"),
+            cur.optDouble("wind_speed_10m", 0.0).roundToInt(),
+            next
         )
-        val j = JSONObject(httpGet(url, mapOf("X-Yandex-Weather-Key" to key, "X-Yandex-API-Key" to key)))
-        val fact = j.getJSONObject("fact")
-        val t0 = fact.getInt("temp")
-        val c0 = fact.optString("condition")
-        val wind = fact.optDouble("wind_speed", 0.0).roundToInt()
 
-        val sb = StringBuilder("Сейчас ").append(temp(t0)).append(", ").append(yandexCondition(c0))
-        if (wind >= 1) sb.append(", ветер ").append(Ru.num(wind)).append(" ").append(Ru.plural(wind, "метр", "метра", "метров")).append(" в секунду")
-        sb.append(". ")
-
-        // Часы сегодня и завтра подряд; берём два ближайших будущих часа.
-        val nowSec = System.currentTimeMillis() / 1000
-        val hours = ArrayList<JSONObject>()
-        val forecasts = j.optJSONArray("forecasts")
-        if (forecasts != null) {
-            for (f in 0 until forecasts.length()) {
-                val hs = forecasts.getJSONObject(f).optJSONArray("hours") ?: continue
-                for (h in 0 until hs.length()) {
-                    val o = hs.getJSONObject(h)
-                    if (o.optLong("hour_ts") > nowSec) hours.add(o)
-                }
+        val days = ArrayList<WeatherDay>()
+        j.optJSONObject("daily")?.let { d ->
+            val dc = d.getJSONArray("weather_code")
+            val mx = d.getJSONArray("temperature_2m_max")
+            val mn = d.getJSONArray("temperature_2m_min")
+            val pp = d.optJSONArray("precipitation_probability_max")
+            val ww = d.optJSONArray("wind_speed_10m_max")
+            for (k in 0 until dc.length()) {
+                days.add(
+                    WeatherDay(
+                        k,
+                        mn.getDouble(k).roundToInt(),
+                        mx.getDouble(k).roundToInt(),
+                        dc.getInt(k),
+                        pp?.optInt(k, 0) ?: 0,
+                        ww?.optDouble(k, 0.0)?.roundToInt() ?: 0
+                    )
+                )
             }
         }
-        val labels = listOf("Через час", "Через два часа")
-        val parts = hours.sortedBy { it.optLong("hour_ts") }.take(2).mapIndexed { k, o ->
-            val t = o.getInt("temp")
-            var p = labels[k] + ": " + temp(t) + ", " + yandexCondition(o.optString("condition"))
-            val prob = o.optInt("prec_prob", 0)
-            if (prob >= 40) p += ", вероятность осадков " + Ru.num(prob) + " " + Ru.plural(prob, "процент", "процента", "процентов")
-            p
-        }
-        if (parts.isNotEmpty()) sb.append(parts.joinToString(". ")).append(".")
-        return sb.toString()
-    }
-
-    private fun yandexCondition(c: String): String = when (c) {
-        "clear" -> "ясно"
-        "partly-cloudy" -> "малооблачно"
-        "cloudy" -> "облачно с прояснениями"
-        "overcast" -> "пасмурно"
-        "drizzle" -> "морось"
-        "light-rain" -> "небольшой дождь"
-        "rain" -> "дождь"
-        "moderate-rain" -> "умеренный дождь"
-        "heavy-rain" -> "сильный дождь"
-        "continuous-heavy-rain" -> "длительный сильный дождь"
-        "showers" -> "ливень"
-        "wet-snow" -> "мокрый снег"
-        "light-snow" -> "небольшой снег"
-        "snow" -> "снег"
-        "snow-showers" -> "снегопад"
-        "hail" -> "град"
-        "thunderstorm" -> "гроза"
-        "thunderstorm-with-rain" -> "дождь с грозой"
-        "thunderstorm-with-hail" -> "гроза с градом"
-        else -> "без осадков"
-    }
-
-    /** Запасной источник — норвежский метеоинститут (тоже бесплатно, без ключа). */
-    private fun fetchMetNo(lat: Double, lon: Double): String {
-        val url = String.format(
-            Locale.US,
-            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=%.4f&lon=%.4f", lat, lon
-        )
-        val series = JSONObject(httpGet(url)).getJSONObject("properties").getJSONArray("timeseries")
-        fun at(k: Int): Triple<Int, String, Int>? {
-            if (k >= series.length()) return null
-            val data = series.getJSONObject(k).getJSONObject("data")
-            val det = data.getJSONObject("instant").getJSONObject("details")
-            val t = det.getDouble("air_temperature").roundToInt()
-            val wind = det.optDouble("wind_speed", 0.0).roundToInt()
-            val sym = data.optJSONObject("next_1_hours")?.optJSONObject("summary")?.optString("symbol_code") ?: ""
-            return Triple(t, describeSymbol(sym), wind)
-        }
-        val now = at(0) ?: throw java.io.IOException("пустой прогноз")
-        val sb = StringBuilder("Сейчас ").append(temp(now.first)).append(", ").append(now.second)
-        if (now.third >= 1) sb.append(", ветер ").append(Ru.num(now.third)).append(" ").append(Ru.plural(now.third, "метр", "метра", "метров")).append(" в секунду")
-        sb.append(". ")
-        val labels = listOf("Через час", "Через два часа")
-        val parts = (1..2).mapNotNull { k -> at(k)?.let { labels[k - 1] + ": " + temp(it.first) + ", " + it.second } }
-        sb.append(parts.joinToString(". ")).append(".")
-        return sb.toString()
-    }
-
-    private fun describeSymbol(code: String): String {
-        val c = code.substringBefore('_')
-        return when {
-            c.isEmpty() -> "без осадков"
-            c == "clearsky" -> "ясно"
-            c == "fair" -> "преимущественно ясно"
-            c == "partlycloudy" -> "переменная облачность"
-            c == "cloudy" -> "пасмурно"
-            c == "fog" -> "туман"
-            "thunder" in c -> "гроза"
-            "sleet" in c -> if (c.startsWith("light")) "небольшой мокрый снег" else "мокрый снег"
-            "snow" in c -> when {
-                c.startsWith("light") -> "небольшой снег"
-                c.startsWith("heavy") -> "сильный снег"
-                else -> "снег"
-            }
-            "rain" in c -> when {
-                c.startsWith("light") -> if ("showers" in c) "небольшой ливень" else "небольшой дождь"
-                c.startsWith("heavy") -> if ("showers" in c) "сильный ливень" else "сильный дождь"
-                else -> if ("showers" in c) "ливень" else "дождь"
-            }
-            else -> "без осадков"
-        }
-    }
-
-    private fun temp(t: Int): String = when {
-        t == 0 -> "ноль градусов"
-        t > 0 -> "плюс " + Ru.num(t) + " " + Ru.plural(t, "градус", "градуса", "градусов")
-        else -> "минус " + Ru.num(-t) + " " + Ru.plural(-t, "градус", "градуса", "градусов")
-    }
-
-    /** Коды погоды WMO. */
-    fun describe(code: Int): String = when (code) {
-        0 -> "ясно"
-        1 -> "преимущественно ясно"
-        2 -> "переменная облачность"
-        3 -> "пасмурно"
-        45, 48 -> "туман"
-        51, 53, 55 -> "морось"
-        56, 57 -> "ледяная морось"
-        61 -> "небольшой дождь"
-        63 -> "дождь"
-        65 -> "сильный дождь"
-        66, 67 -> "ледяной дождь, гололёд"
-        71 -> "небольшой снег"
-        73 -> "снег"
-        75 -> "сильный снег"
-        77 -> "снежная крупа"
-        80 -> "небольшой ливень"
-        81 -> "ливень"
-        82 -> "сильный ливень"
-        85 -> "небольшой снегопад"
-        86 -> "сильный снегопад"
-        95 -> "гроза"
-        96, 99 -> "гроза с градом"
-        else -> "без осадков"
+        return WeatherReport(now, days, null)
     }
 }

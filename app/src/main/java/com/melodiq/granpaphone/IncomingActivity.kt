@@ -135,7 +135,8 @@ class IncomingActivity : Activity() {
 
     private fun loop() {
         val s = ++session
-        val phrase = if (rounds == 0) "Звонит: $name. Скажите: ответить. Или: сбросить." else "Звонит: $name."
+        val phr = Phrases.of(this)
+        val phrase = if (rounds == 0) phr.incomingFirst(name) else phr.incomingRepeat(name)
         rounds++
         sp.say(phrase) {
             if (s != session) return@say
@@ -144,13 +145,13 @@ class IncomingActivity : Activity() {
                 return@say
             }
             sp.beepListen()
-            ears.listen(GRAMMAR.mapNotNull { ears.fixPhrase(it) }, 4500) { text ->
+            val grammar = if (phr.useGrammar) phr.answerPhrases.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null } else null
+            ears.listen(grammar, 4500) { text ->
                 if (s != session) return@listen
-                val w = Ru.words(text ?: "")
-                when {
-                    w.any { it in REJECT_WORDS } -> reject()
-                    w.any { it in ANSWER_WORDS } -> answer()
-                    else -> loop()
+                when (text?.let { phr.answerOrReject(it) }) {
+                    false -> reject()
+                    true -> answer()
+                    null -> loop()
                 }
             }
         }
@@ -167,7 +168,7 @@ class IncomingActivity : Activity() {
             lamp.state = LampState.ERROR
             hint.setTextColor(Palette.ROSE)
             hint.text = getString(R.string.call_fail)
-            sp.say("Не получилось ответить сам. Нажмите зелёную кнопку.")
+            sp.say(Phrases.of(this).answerFailed)
             handler.postDelayed({ finish() }, 2500)
         }
     }
@@ -176,7 +177,7 @@ class IncomingActivity : Activity() {
         session++
         ears.stop()
         sp.beepHeard()
-        sp.say("Сбрасываю.")
+        sp.say(Phrases.of(this).rejecting)
         Calls.reject(this)
         finish()
     }
@@ -195,22 +196,6 @@ class IncomingActivity : Activity() {
         fun close() {
             current?.let { a -> a.runOnUiThread { if (!a.isFinishing) a.finish() } }
         }
-
-        private val GRAMMAR = listOf(
-            "ответить", "ответь", "отвечу", "отвечай", "алло",
-            "подними трубку", "подними", "поднять трубку", "подними телефон",
-            "возьми трубку", "взять трубку", "бери трубку", "прими звонок", "принять звонок", "принять", "прими",
-            "да", "давай", "соедини",
-            "сбросить", "сбрось", "сбросьте", "отклонить", "отклони", "не отвечать", "не отвечай",
-            "положи трубку", "не надо", "нет", "потом"
-        )
-        private val ANSWER_WORDS = setOf(
-            "ответить", "ответь", "отвечу", "отвечай", "алло", "подними", "поднять", "возьми", "взять",
-            "бери", "прими", "принять", "трубку", "да", "давай", "соедини", "телефон"
-        )
-        private val REJECT_WORDS = setOf(
-            "сбросить", "сбрось", "сбросьте", "отклонить", "отклони", "не", "положи", "нет", "потом"
-        )
     }
 }
 

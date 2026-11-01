@@ -120,7 +120,8 @@ class SetupActivity : Activity() {
             else -> getString(R.string.asr_loading)
         })
         if (ears.model != null) {
-            val wakeOk = Sleep.WAKE_PHRASES.any { ears.fixPhrase(it) != null }
+            val phr = Phrases.of(this)
+            val wakeOk = !phr.useGrammar || phr.wakePhrases.any { ears.fixPhrase(it) != null }
             note(getString(if (wakeOk) R.string.wake_known else R.string.wake_unknown))
         }
 
@@ -137,9 +138,7 @@ class SetupActivity : Activity() {
         note(getString(R.string.lockscreen_tip))
 
         button(getString(R.string.test_voice)) {
-            App.instance.speaker.say("Проверка голоса. Сейчас " + java.util.Calendar.getInstance().let {
-                Ru.clock(it.get(java.util.Calendar.HOUR_OF_DAY), it.get(java.util.Calendar.MINUTE))
-            })
+            App.instance.speaker.say(Phrases.of(this).voiceTest(java.util.Calendar.getInstance()))
         }
 
         weatherSection()
@@ -157,6 +156,9 @@ class SetupActivity : Activity() {
             val label = names[c] ?: c
             if (c == cur) tile("✓  $label", Tile.DONE) {} else button(label) {
                 Lang.set(this, c)
+                // Сменить и речь, и распознавание: другая модель и другой голос.
+                App.instance.ears.load(Phrases.of(c).modelAsset)
+                App.instance.speaker.setLanguage(Phrases.of(c).ttsLocale)
                 AleshaWidget.refresh(this)
                 KeeperService.start(this)
                 recreate()
@@ -202,30 +204,15 @@ class SetupActivity : Activity() {
         }
     }
 
-    /** Погода: ключ Яндекс.Погоды и последняя ошибка. */
+    /** Погода: только Open-Meteo; здесь — проверка и последняя ошибка. */
     private fun weatherSection() {
-        val dp = resources.displayMetrics.density
         title(getString(R.string.weather_title))
-        val key = Weather.yandexKey(this)
-        note(getString(if (key.isNullOrBlank()) R.string.weather_openmeteo else R.string.weather_yandex))
-        val field = android.widget.EditText(this).apply {
-            hint = getString(R.string.weather_key_hint)
-            setText(key ?: "")
-            textSize = 17f
-            setTextColor(Palette.MILK)
-            setHintTextColor(Palette.MILK_DIM)
-            isSingleLine = true
-            background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = 12 * dp
-                setColor(Color.parseColor("#1C3A63"))
-            }
-            setPadding((16 * dp).toInt(), (14 * dp).toInt(), (16 * dp).toInt(), (14 * dp).toInt())
-        }
-        box.addView(field, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = (10 * dp).toInt() })
-        button(getString(R.string.weather_save)) {
-            Weather.setYandexKey(this, field.text.toString())
-            App.instance.speaker.say("Проверяю погоду.")
-            Weather.get(this) { text ->
+        note(getString(R.string.weather_openmeteo))
+        button(getString(R.string.weather_check)) {
+            val phr = Phrases.of(this)
+            App.instance.speaker.say(phr.weatherChecking)
+            Weather.get(this) { r ->
+                val text = r.error?.let { phr.weatherError(it) } ?: r.now?.let { phr.weatherNow(it) } ?: ""
                 App.instance.speaker.say(text, flush = false)
                 rebuild()
             }
@@ -257,7 +244,7 @@ class SetupActivity : Activity() {
     private fun sample(name: String) {
         val sp = App.instance.speaker
         sp.selectVoice(name)
-        sp.say("Здравствуйте. Я Алёша, ваш помощник. Так звучит мой голос.")
+        sp.say(Phrases.of(this).voiceSample)
         rebuild()
     }
 

@@ -77,18 +77,19 @@ object Contacts {
         } catch (e: SecurityException) {
             return emptyList()
         }
+        val phr = Phrases.of(ctx)
         return byName.map { (name, number) ->
-            val nw = Ru.words(name).filter { it.length >= 2 && it.any { ch -> ch.isLetter() } }
-            val forms = nw.flatMap { wordForms(it) }.toSet()
+            val minLen = if (phr.code == "zh") 1 else 2
+            val nw = phr.words(name).filter { it.length >= minLen && it.any { ch -> ch.isLetter() } }
+            val forms = nw.flatMap { phr.contactForms(it) }.toSet()
             Person(name, number, forms, nw)
         }
     }
 
     /** Контакты, подходящие под фразу, лучшие первыми. */
-    fun match(people: List<Person>, phrase: String): List<Person> {
-        val heard = Ru.words(phrase).toSet()
+    fun match(people: List<Person>, phrase: String, phr: Phrases): List<Person> {
         return people
-            .map { p -> p to heard.count { it in p.forms } }
+            .map { p -> p to phr.contactScore(p, phrase) }
             .filter { it.second > 0 }
             .sortedByDescending { it.second }
             .map { it.first }
@@ -96,14 +97,15 @@ object Contacts {
 
     /** Имя звонящего по номеру. */
     fun nameFor(ctx: Context, number: String?): String {
-        if (number.isNullOrBlank()) return "неизвестный номер"
+        val phr = Phrases.of(ctx)
+        if (number.isNullOrBlank()) return phr.unknownNumber
         return try {
             val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
             ctx.contentResolver.query(uri, arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME), null, null, null)?.use { c ->
                 if (c.moveToFirst()) c.getString(0) else null
-            } ?: "незнакомый номер"
+            } ?: phr.strangerNumber
         } catch (e: Exception) {
-            "незнакомый номер"
+            phr.strangerNumber
         }
     }
 }

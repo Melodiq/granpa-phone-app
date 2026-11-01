@@ -114,7 +114,7 @@ object Diary {
     }
 
     /** «врач, завтра в пятнадцать часов». */
-    fun describe(note: Note): String = note.text + ", " + RuDate.describe(note.time)
+    fun describe(ctx: Context, note: Note): String = Phrases.of(ctx).describeNote(note)
 
     // --- Напоминания, которые дед ещё не услышал при разблокированном экране ---
 

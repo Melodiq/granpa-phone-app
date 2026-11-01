@@ -50,8 +50,7 @@ object Reminders {
         return if (p.isEmpty()) null else text(p)
     }
 
-    private fun text(notes: List<Note>): String =
-        "Напоминание. " + notes.joinToString(". ") { Diary.describe(it) } + "."
+    private fun text(notes: List<Note>): String = Phrases.of(App.instance).reminder(notes)
 
     private fun speakPending(ctx: Context, clear: Boolean) {
         val p = Diary.pending(ctx)

@@ -45,7 +45,7 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
             flushQueued()
             return
         }
-        val r = tts.setLanguage(Locale("ru", "RU"))
+        val r = tts.setLanguage(Phrases.of(ctx).ttsLocale)
         languageOk = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED
         // Спокойная манера: чуть медленнее и чуть ниже обычного.
         tts.setSpeechRate(0.85f)
@@ -114,12 +114,27 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
     // ---------- выбор голоса ----------
 
     /** Русские голоса, которые работают без интернета и уже скачаны. */
-    fun russianVoices(): List<Voice> {
+    /** Сменить язык речи (после смены языка интерфейса). */
+    fun setLanguage(locale: Locale) {
+        if (!ready) return
+        try {
+            val r = tts.setLanguage(locale)
+            languageOk = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED
+            applyVoice()
+        } catch (_: Exception) {}
+    }
+
+    private fun lang() = Phrases.of(ctx).ttsLocale.language
+
+    /** Голоса текущего языка, которые работают без интернета и уже скачаны. */
+    fun russianVoices(): List<Voice> = languageVoices()
+
+    fun languageVoices(): List<Voice> {
         if (!ready) return emptyList()
         return try {
             tts.voices.orEmpty()
                 .filter { v ->
-                    v.locale.language == "ru" &&
+                    v.locale.language == lang() &&
                         !v.isNetworkConnectionRequired &&
                         !v.features.orEmpty().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
                 }
@@ -135,13 +150,13 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
     fun selectVoice(name: String) {
         val v = russianVoices().firstOrNull { it.name == name } ?: return
         try { tts.voice = v } catch (_: Exception) {}
-        prefs.edit().putString("name", name).apply()
+        prefs.edit().putString("name_" + lang(), name).apply()
     }
 
     private fun applyVoice() {
         val list = russianVoices()
         if (list.isEmpty()) return
-        val saved = prefs.getString("name", null)
+        val saved = prefs.getString("name_" + lang(), null) ?: if (lang() == "ru") prefs.getString("name", null) else null
         val v = list.firstOrNull { it.name == saved } ?: guessMale(list) ?: return
         try { tts.voice = v } catch (_: Exception) {}
     }

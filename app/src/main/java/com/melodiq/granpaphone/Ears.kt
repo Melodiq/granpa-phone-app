@@ -29,25 +29,55 @@ class Ears(private val ctx: Context) {
     private var service: SpeechService? = null
     private var recognizer: Recognizer? = null
 
-    fun load() {
-        StorageService.unpack(ctx, "model-ru", "model",
+    /** Какая модель загружена (папка в assets: model-ru, model-en, model-zh). */
+    @Volatile var loadedAsset: String? = null
+        private set
+    private var loadingAsset: String? = null
+
+    /** Загрузить модель для языка. Повторный вызов с той же моделью ничего не делает. */
+    fun load(asset: String = Phrases.of(ctx).modelAsset) {
+        if (asset == loadedAsset || asset == loadingAsset) return
+        loadingAsset = asset
+        stop()
+        val old = model
+        model = null
+        vocab = null
+        error = null
+        loadedAsset = null
+        try { old?.close() } catch (_: Exception) {}
+        StorageService.unpack(ctx, asset, "model",
             { m ->
+                if (loadingAsset != asset) {
+                    try { m.close() } catch (_: Exception) {}
+                    return@unpack
+                }
                 Thread {
-                    val v = loadVocab()
+                    val v = loadVocab(asset)
                     main.post {
+                        if (loadingAsset != asset) {
+                            try { m.close() } catch (_: Exception) {}
+                            return@post
+                        }
                         vocab = v
                         model = m
+                        loadedAsset = asset
+                        loadingAsset = null
                         val w = synchronized(waiters) { waiters.toList().also { waiters.clear() } }
                         w.forEach { it() }
                     }
                 }.start()
             },
-            { e -> error = e.message ?: e.toString() })
+            { e ->
+                if (loadingAsset == asset) {
+                    error = e.message ?: e.toString()
+                    loadingAsset = null
+                }
+            })
     }
 
-    private fun loadVocab(): Set<String>? {
+    private fun loadVocab(asset: String): Set<String>? {
         return try {
-            val root = File(ctx.getExternalFilesDir(null), "model")
+            val root = File(File(ctx.getExternalFilesDir(null), "model"), asset)
             val f = root.walkTopDown().firstOrNull { it.isFile && it.name == "words.txt" } ?: return null
             val set = HashSet<String>(200_000)
             f.forEachLine { line ->
