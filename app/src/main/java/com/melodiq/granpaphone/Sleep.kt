@@ -22,6 +22,13 @@ object Sleep {
         prefs(ctx).edit().putBoolean("always", on).apply()
     }
 
+    // Счётчики для диагностики: сколько раз услышали «Алёша» и сколько раз окно открылось.
+    fun heardCount(ctx: Context) = prefs(ctx).getInt("heard", 0)
+    fun openedCount(ctx: Context) = prefs(ctx).getInt("opened", 0)
+    fun countHeard(ctx: Context) = prefs(ctx).edit().putInt("heard", heardCount(ctx) + 1).apply()
+    fun countOpened(ctx: Context) = prefs(ctx).edit().putInt("opened", openedCount(ctx) + 1).apply()
+    fun resetCounts(ctx: Context) = prefs(ctx).edit().putInt("heard", 0).putInt("opened", 0).apply()
+
     /** Фразы-пробуждения (в е-написании; Ears сам подберёт ё, если модель пишет через ё). */
     val WAKE_PHRASES = listOf(
         "алеша", "алеша привет", "привет алеша", "алешенька", "алешка", "эй алеша", "алексей"

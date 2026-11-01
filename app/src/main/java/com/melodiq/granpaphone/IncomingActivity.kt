@@ -49,7 +49,7 @@ class IncomingActivity : Activity() {
         val condensed = Typeface.create("sans-serif-condensed", Typeface.BOLD)
         val medium = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         val top = TextView(this).apply {
-            text = "Звонит"
+            text = getString(R.string.call_top)
             typeface = medium
             textSize = 26f
             setTextColor(Palette.MILK_DIM)
@@ -68,7 +68,7 @@ class IncomingActivity : Activity() {
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         hint = TextView(this).apply {
-            text = "Скажите «ответить»\nили коснитесь экрана"
+            text = getString(R.string.call_hint)
             typeface = condensed
             textSize = 32f
             setTextColor(Palette.MINT)
@@ -122,6 +122,10 @@ class IncomingActivity : Activity() {
         super.onDestroy()
     }
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     private fun setName(n: String) {
         name = n
         who.text = n
@@ -162,7 +166,7 @@ class IncomingActivity : Activity() {
         } else {
             lamp.state = LampState.ERROR
             hint.setTextColor(Palette.ROSE)
-            hint.text = "Не получилось ответить.\nНажмите зелёную кнопку"
+            hint.text = getString(R.string.call_fail)
             sp.say("Не получилось ответить сам. Нажмите зелёную кнопку.")
             handler.postDelayed({ finish() }, 2500)
         }

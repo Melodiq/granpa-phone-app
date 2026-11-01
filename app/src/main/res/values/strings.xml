@@ -2,4 +2,67 @@
 <resources>
     <string name="app_name">Помощник Алёша</string>
     <string name="widget_description">Большая кнопка: нажмите и скажите Алёше команду</string>
+    <string name="widget_label">Алёша — большая кнопка</string>
+    <string name="widget_name">Алёша</string>
+    <string name="widget_tap">Нажмите и говорите</string>
+    <string name="setup_title">Настройка помощника</string>
+    <string name="setup_intro">Для родственников. Нажмите на каждую жёлтую плашку и разрешите. Зелёная рамка с галочкой — готово.</string>
+    <string name="lang_title">Язык интерфейса</string>
+    <string name="lang_note">Голосовые команды и речь помощника остаются на русском.</string>
+    <string name="step_permissions">1. Разрешения: микрофон, контакты, звонки, ответ на звонки, геолокация</string>
+    <string name="step_overlay">2. Показ поверх других окон (приветствие при нажатии боковой кнопки и ответ на звонок голосом)</string>
+    <string name="step_battery">3. Батарея: без ограничений (иначе система выключит помощника)</string>
+    <string name="step_alarms">4. Точные напоминания</string>
+    <string name="step_tts">5. Русский голос. Если галочки нет — установите голос в настройках синтеза речи (Google)</string>
+    <string name="asr_ready">✓ 6. Распознавание речи готово (работает без интернета)</string>
+    <string name="asr_error" formatted="true">✗ 6. Распознавание речи: ошибка — %1$s</string>
+    <string name="asr_loading">… 6. Распознавание речи загружается (первый запуск до минуты)</string>
+    <string name="wake_known">✓ Слово «Алёша» распознаётся: «отбой» — помощник отдыхает, «Алёша» — просыпается</string>
+    <string name="wake_unknown">✗ Слово «Алёша» распознавание не знает — будить можно касанием экрана</string>
+    <string name="step_autostart">7. Автозапуск (Tecno/Infinix): откроются настройки приложения → включите «Автозапуск» и разрешите работу в фоне</string>
+    <string name="autostart_note">Также на Tecno: Настройки → Батарея → Управление приложениями → «Помощник Алёша» → Без ограничений. И закрепите приложение в списке недавних (замок), чтобы его не закрывала очистка.</string>
+    <string name="xiaomi_title">Xiaomi / Poco / Redmi</string>
+    <string name="xiaomi_perms">Разрешения Xiaomi: включите «Всплывающие окна, когда запущено в фоне» и «Экран блокировки»</string>
+    <string name="xiaomi_autostart">Автозапуск Xiaomi: включите для помощника</string>
+    <string name="xiaomi_note">Без этого Xiaomi не даёт помощнику открыться на «Алёша» при выключенном экране. Ещё: Настройки → Приложения → помощник → Контроль активности → Нет ограничений.</string>
+    <string name="step_home">8. Необязательно: сделать главным экраном (тогда при нажатии кнопки сразу открывается помощник)</string>
+    <string name="lockscreen_tip">Совет: отключите блокировку экрана (Настройки → Безопасность → Блокировка экрана → Нет), чтобы ничего не нужно было смахивать.</string>
+    <string name="test_voice">Проверить голос</string>
+    <string name="weather_title">Погода</string>
+    <string name="weather_openmeteo">Сейчас погода берётся из Open-Meteo. Чтобы брать из Яндекса, вставьте ключ API Яндекс.Погоды (yandex.ru/dev/weather → личный кабинет → ключ).</string>
+    <string name="weather_yandex">Погода берётся из Яндекса. Если Яндекс не ответит — из Open-Meteo.</string>
+    <string name="weather_key_hint">Ключ API Яндекс.Погоды</string>
+    <string name="weather_save">Сохранить ключ и проверить погоду</string>
+    <string name="weather_error" formatted="true">Последняя ошибка погоды: %1$s</string>
+    <string name="wake_title">Слово «Алёша»</string>
+    <string name="wake_always">Слушать «Алёша» всегда, когда помощник не на экране (нажмите, чтобы только в отбое)</string>
+    <string name="wake_sleep_only">Слушать «Алёша» только в отбое (нажмите, чтобы всегда)</string>
+    <string name="wake_battery">«Всегда» удобнее, но расходует батарею сильнее.</string>
+    <string name="wake_stats" formatted="true">Услышано «Алёша»: %1$d, помощник открылся: %2$d</string>
+    <string name="wake_stats_note">Если «услышано» меньше, чем вы звали, — системе не нравится микрофон в фоне (батарея, разрешения Xiaomi). Если «открылся» меньше, чем «услышано», — система не даёт открыть окно (Xiaomi: всплывающие окна в фоне).</string>
+    <string name="wake_stats_reset">Сбросить счётчик</string>
+    <string name="voice_title">Голос помощника</string>
+    <string name="voice_none">Скачанных русских голосов нет. Нажмите пункт 5 и скачайте русский голос в настройках Google.</string>
+    <string name="voice_note">Нажмите на голос — он скажет фразу и станет голосом помощника. Выберите спокойный мужской. Если мужского нет: пункт 5 → Русский → скачайте ещё голоса.</string>
+    <string name="voice_item" formatted="true">Голос %1$d</string>
+    <string name="voice_selected"> — выбран</string>
+    <string name="contacts_title" formatted="true">Контакты (%1$d)</string>
+    <string name="contacts_note">Помощник узнаёт контакт по словам из его имени. Лучше подписывать коротко: «Дочь», «Сын Андрей», «Соседка Валя». ✗ — слово не знает распознавание, переименуйте контакт.</string>
+    <string name="contacts_wait">Проверка станет доступна после загрузки распознавания.</string>
+    <string name="done">Готово — вернуться к помощнику</string>
+    <string name="main_idle">Коснитесь экрана и скажите, что нужно</string>
+    <string name="hint_listen">Говорите</string>
+    <string name="hint_idle">Коснитесь экрана, чтобы сказать команду</string>
+    <string name="hint_sleep">Чтобы позвать, скажите «Алёша»</string>
+    <string name="sleep_status">Отдыхаю</string>
+    <string name="sleep_hint">Чтобы позвать, скажите «Алёша» или коснитесь экрана</string>
+    <string name="status_listen">Слушаю…</string>
+    <string name="status_heard">Услышал</string>
+    <string name="status_speak">Говорю…</string>
+    <string name="call_top">Звонит</string>
+    <string name="call_hint">Скажите «ответить»\nили коснитесь экрана</string>
+    <string name="call_fail">Не получилось ответить.\nНажмите зелёную кнопку</string>
+    <string name="notif_channel">Помощник Алёша</string>
+    <string name="notif_on">Помощник Алёша работает</string>
+    <string name="notif_sleep">Алёша отдыхает. Позовите: «Алёша»</string>
 </resources>

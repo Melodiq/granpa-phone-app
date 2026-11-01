@@ -100,7 +100,12 @@ class Ears(private val ctx: Context) {
      * grammar — список допустимых фраз (точнее) или null — свободная речь.
      * cb(null) — ничего не сказали или ошибка.
      */
-    fun listen(grammar: List<String>?, timeoutMs: Int, cb: (String?) -> Unit) {
+    fun listen(
+        grammar: List<String>?,
+        timeoutMs: Int,
+        partial: ((String) -> Boolean)? = null,
+        cb: (String?) -> Unit
+    ) {
         val m = model
         if (m == null) {
             cb(null)
@@ -125,7 +130,13 @@ class Ears(private val ctx: Context) {
             }
             recognizer = rec
             val listener = object : RecognitionListener {
-                override fun onPartialResult(hypothesis: String?) {}
+                override fun onPartialResult(hypothesis: String?) {
+                    if (partial == null || hypothesis.isNullOrBlank()) return
+                    val t = try {
+                        JSONObject(hypothesis).optString("partial").replace("[unk]", " ").trim()
+                    } catch (e: Exception) { "" }
+                    if (t.isNotEmpty() && partial(t)) finish(t)
+                }
 
                 override fun onResult(hypothesis: String?) {
                     val t = textOf(hypothesis)

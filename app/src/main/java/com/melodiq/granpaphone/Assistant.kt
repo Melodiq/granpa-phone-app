@@ -48,12 +48,12 @@ class Assistant(private val act: MainActivity) {
             return
         }
         sp.beepListen()
-        act.setState(LampState.LISTEN, "Слушаю…")
+        act.setState(LampState.LISTEN, act.getString(R.string.status_listen))
         ears.listen(grammar, timeoutMs) { text ->
             if (s != session) return@listen
             if (text != null) {
                 sp.beepHeard()
-                act.setState(LampState.HEARD, "«$text»", "Услышал")
+                act.setState(LampState.HEARD, "«$text»", act.getString(R.string.status_heard))
             }
             cb(text)
         }

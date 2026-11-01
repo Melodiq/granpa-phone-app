@@ -144,7 +144,7 @@ class MainActivity : Activity() {
             true
         }
         updateClock()
-        setState(LampState.IDLE, "Коснитесь экрана и скажите, что нужно")
+        setState(LampState.IDLE, getString(R.string.main_idle))
     }
 
     private fun onTap() {
@@ -200,6 +200,7 @@ class MainActivity : Activity() {
             pendingWake -> {
                 pendingWake = false
                 pendingGreet = false
+                Sleep.countOpened(this)
                 assistant.wakeGreet()
             }
             pendingGreet -> {
@@ -224,34 +225,43 @@ class MainActivity : Activity() {
             root.setBackgroundColor(Palette.NIGHT_DEEP)
             window.statusBarColor = Palette.NIGHT_DEEP
             window.navigationBarColor = Palette.NIGHT_DEEP
-            setState(LampState.SLEEP, "Отдыхаю", "Чтобы позвать, скажите «Алёша» или коснитесь экрана")
+            setState(LampState.SLEEP, getString(R.string.sleep_status), getString(R.string.sleep_hint))
         } else {
             root.setBackgroundColor(Palette.NIGHT)
             window.statusBarColor = Palette.NIGHT
             window.navigationBarColor = Palette.NIGHT
-            if (lamp.state == LampState.SLEEP) setState(LampState.IDLE, "Коснитесь экрана и скажите, что нужно")
+            if (lamp.state == LampState.SLEEP) setState(LampState.IDLE, getString(R.string.main_idle))
         }
     }
 
     private fun updateClock() {
         val c = Calendar.getInstance()
         clock.text = String.format("%d:%02d", c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))
-        val wd = Ru.weekdayName(c.get(Calendar.DAY_OF_WEEK)).replaceFirstChar { it.uppercase() }
-        day.text = wd + ", " + c.get(Calendar.DAY_OF_MONTH) + " " + Ru.monthsGen[c.get(Calendar.MONTH)]
+        day.text = if (Lang.isRu(this)) {
+            val wd = Ru.weekdayName(c.get(Calendar.DAY_OF_WEEK)).replaceFirstChar { it.uppercase() }
+            wd + ", " + c.get(Calendar.DAY_OF_MONTH) + " " + Ru.monthsGen[c.get(Calendar.MONTH)]
+        } else {
+            val pattern = if (Lang.code(this) == "zh") "M月d日 EEEE" else "EEEE, d MMMM"
+            java.text.SimpleDateFormat(pattern, Lang.locale(this)).format(c.time)
+        }
     }
 
     /** Показать текст (то, что сейчас говорится). */
     fun show(text: String) {
-        setState(LampState.SPEAK, text)
+        setState(LampState.SPEAK, if (Lang.isRu(this)) text else getString(R.string.status_speak))
+    }
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
     }
 
     fun setState(state: LampState, text: String? = null, hintText: String? = null) {
         lamp.state = state
         if (text != null) status.text = text
         hint.text = hintText ?: when (state) {
-            LampState.LISTEN -> "Говорите"
-            LampState.IDLE -> "Коснитесь экрана, чтобы сказать команду"
-            LampState.SLEEP -> "Чтобы позвать, скажите «Алёша»"
+            LampState.LISTEN -> getString(R.string.hint_listen)
+            LampState.IDLE -> getString(R.string.hint_idle)
+            LampState.SLEEP -> getString(R.string.hint_sleep)
             else -> ""
         }
         root.contentDescription = status.text.toString() + ". " + hint.text

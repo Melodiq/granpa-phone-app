@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Alyosha Assistant</string>
+    <string name="widget_description">A big button: tap it and tell Alyosha what you need</string>
+    <string name="widget_label">Alyosha — big button</string>
+    <string name="widget_name">Alyosha</string>
+    <string name="widget_tap">Tap and speak</string>
+    <string name="setup_title">Assistant setup</string>
+    <string name="setup_intro">For family members. Tap each amber tile and allow it. A green frame with a check mark means done.</string>
+    <string name="lang_title">Interface language</string>
+    <string name="lang_note">Voice commands and the assistant\'s speech stay in Russian.</string>
+    <string name="step_permissions">1. Permissions: microphone, contacts, calls, answering calls, location</string>
+    <string name="step_overlay">2. Display over other apps (greeting on the side button and answering calls by voice)</string>
+    <string name="step_battery">3. Battery: no restrictions (otherwise the system stops the assistant)</string>
+    <string name="step_alarms">4. Exact reminders</string>
+    <string name="step_tts">5. Russian voice. If it isn\'t checked, install it in text-to-speech settings (Google)</string>
+    <string name="asr_ready">✓ 6. Speech recognition is ready (works offline)</string>
+    <string name="asr_error" formatted="true">✗ 6. Speech recognition error: %1$s</string>
+    <string name="asr_loading">… 6. Loading speech recognition (the first start takes up to a minute)</string>
+    <string name="wake_known">✓ The word «Алёша» is recognized: «отбой» puts the assistant to rest, «Алёша» wakes it</string>
+    <string name="wake_unknown">✗ The recognizer doesn\'t know the word «Алёша»; wake the assistant by tapping the screen</string>
+    <string name="step_autostart">7. Autostart (Tecno/Infinix): app settings open → turn on Autostart and allow background activity</string>
+    <string name="autostart_note">Also on Tecno: Settings → Battery → App management → the assistant → No restrictions. Lock the app in recent apps (padlock) so cleanup doesn\'t close it.</string>
+    <string name="xiaomi_title">Xiaomi / Poco / Redmi</string>
+    <string name="xiaomi_perms">Xiaomi permissions: turn on «Display pop-up windows while running in the background» and «Show on lock screen»</string>
+    <string name="xiaomi_autostart">Xiaomi autostart: turn it on for the assistant</string>
+    <string name="xiaomi_note">Without these, Xiaomi won\'t let the assistant open on «Алёша» while the screen is off. Also: Settings → Apps → the assistant → Battery saver → No restrictions.</string>
+    <string name="step_home">8. Optional: make it the home screen (the assistant opens right away on the side button)</string>
+    <string name="lockscreen_tip">Tip: turn off the screen lock (Settings → Security → Screen lock → None) so nothing needs to be swiped.</string>
+    <string name="test_voice">Test the voice</string>
+    <string name="weather_title">Weather</string>
+    <string name="weather_openmeteo">Weather now comes from Open-Meteo. To use Yandex, paste a Yandex Weather API key (yandex.ru/dev/weather → account → key).</string>
+    <string name="weather_yandex">Weather comes from Yandex, with Open-Meteo as a fallback.</string>
+    <string name="weather_key_hint">Yandex Weather API key</string>
+    <string name="weather_save">Save the key and check the weather</string>
+    <string name="weather_error" formatted="true">Last weather error: %1$s</string>
+    <string name="wake_title">Wake word «Алёша»</string>
+    <string name="wake_always">Listen for «Алёша» whenever the assistant isn\'t on screen (tap to listen only while resting)</string>
+    <string name="wake_sleep_only">Listen for «Алёша» only while resting (tap to always listen)</string>
+    <string name="wake_battery">«Always» is more convenient but uses more battery.</string>
+    <string name="wake_stats" formatted="true">«Алёша» heard: %1$d times, assistant opened: %2$d times</string>
+    <string name="wake_stats_note">If «heard» is lower than the number of times you called, background mic access is limited (battery, Xiaomi permissions). If «opened» is lower than «heard», the system blocks the window (Xiaomi: pop-up windows in the background).</string>
+    <string name="wake_stats_reset">Reset the counter</string>
+    <string name="voice_title">Assistant voice</string>
+    <string name="voice_none">No Russian voices are downloaded. Tap step 5 and download a Russian voice in Google settings.</string>
+    <string name="voice_note">Tap a voice to hear it; it becomes the assistant\'s voice. Pick a calm male one. If there isn\'t one: step 5 → Russian → download more voices.</string>
+    <string name="voice_item" formatted="true">Voice %1$d</string>
+    <string name="voice_selected"> — selected</string>
+    <string name="contacts_title" formatted="true">Contacts (%1$d)</string>
+    <string name="contacts_note">The assistant recognizes a contact by the words in its name. Short Russian names work best: «Дочь», «Сын Андрей». ✗ means the recognizer doesn\'t know the word; rename the contact.</string>
+    <string name="contacts_wait">The check becomes available once speech recognition has loaded.</string>
+    <string name="done">Done — back to the assistant</string>
+    <string name="main_idle">Tap the screen and say what you need</string>
+    <string name="hint_listen">Speak now</string>
+    <string name="hint_idle">Tap the screen to give a command</string>
+    <string name="hint_sleep">To call me, say «Алёша»</string>
+    <string name="sleep_status">Resting</string>
+    <string name="sleep_hint">Say «Алёша» or tap the screen to call me</string>
+    <string name="status_listen">Listening…</string>
+    <string name="status_heard">Heard</string>
+    <string name="status_speak">Speaking…</string>
+    <string name="call_top">Incoming call</string>
+    <string name="call_hint">Say «ответить» to answer\nor tap the screen</string>
+    <string name="call_fail">Couldn\'t answer.\nPress the green button</string>
+    <string name="notif_channel">Alyosha Assistant</string>
+    <string name="notif_on">Alyosha Assistant is running</string>
+    <string name="notif_sleep">Alyosha is resting. Say «Алёша»</string>
+</resources>

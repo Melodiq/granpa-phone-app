@@ -75,101 +75,141 @@ class SetupActivity : Activity() {
         rebuild()
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     private fun rebuild() {
         box.removeAllViews()
-        title("Настройка помощника")
-        note("Для родственников. Нажмите на каждую жёлтую плашку и разрешите. Зелёная рамка с галочкой — готово.")
+        title(getString(R.string.setup_title))
+        note(getString(R.string.setup_intro))
 
-        item("1. Разрешения: микрофон, контакты, звонки, ответ на звонки, геолокация", Setup.allPermissions(this)) {
+        languageSection()
+
+        item(getString(R.string.step_permissions), Setup.allPermissions(this)) {
             if (Build.VERSION.SDK_INT >= 23) requestPermissions(Setup.permissions(), 1)
         }
 
         if (Build.VERSION.SDK_INT >= 23) {
-            item("2. Показ поверх других окон (приветствие при нажатии боковой кнопки и ответ на звонок голосом)", Settings.canDrawOverlays(this)) {
+            item(getString(R.string.step_overlay), Settings.canDrawOverlays(this)) {
                 open(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             }
             val pm = getSystemService(PowerManager::class.java)
-            item("3. Батарея: без ограничений (иначе система выключит помощника)", pm?.isIgnoringBatteryOptimizations(packageName) == true) {
+            item(getString(R.string.step_battery), pm?.isIgnoringBatteryOptimizations(packageName) == true) {
                 open(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
             }
         }
 
         if (Build.VERSION.SDK_INT >= 31) {
             val am = getSystemService(AlarmManager::class.java)
-            item("4. Точные напоминания", am?.canScheduleExactAlarms() == true) {
+            item(getString(R.string.step_alarms), am?.canScheduleExactAlarms() == true) {
                 open(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
             }
         }
 
         val sp = App.instance.speaker
-        item(
-            "5. Русский голос. Если галочки нет — установите голос в настройках синтеза речи (Google)",
-            sp.ready && sp.languageOk
-        ) {
+        item(getString(R.string.step_tts), sp.ready && sp.languageOk) {
             open(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA))
         }
         voiceSection()
 
         val ears = App.instance.ears
-        val earsText = when {
-            ears.model != null -> "✓ 6. Распознавание речи готово (работает без интернета)"
-            ears.error != null -> "✗ 6. Распознавание речи: ошибка — " + ears.error
-            else -> "… 6. Распознавание речи загружается… (первый запуск до минуты)"
-        }
-        note(earsText)
+        note(when {
+            ears.model != null -> getString(R.string.asr_ready)
+            ears.error != null -> getString(R.string.asr_error, ears.error ?: "")
+            else -> getString(R.string.asr_loading)
+        })
         if (ears.model != null) {
             val wakeOk = Sleep.WAKE_PHRASES.any { ears.fixPhrase(it) != null }
-            note(if (wakeOk) "✓ Слово «Алёша» распознаётся: «отбой» — помощник отдыхает, «Алёша» — просыпается"
-                 else "✗ Слово «Алёша» распознавание не знает — будить можно касанием экрана")
+            note(getString(if (wakeOk) R.string.wake_known else R.string.wake_unknown))
         }
 
-        button("7. Автозапуск (Tecno/Infinix): откроются настройки приложения → включите «Автозапуск» и разрешите работу в фоне") {
+        if (isXiaomi()) xiaomiSection()
+
+        button(getString(R.string.step_autostart)) {
             open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }
-        note("Также на Tecno: Настройки → Батарея → Управление приложениями → «Помощник Алёша» → Без ограничений. И закрепите приложение в списке недавних (замок), чтобы его не закрывала очистка.")
+        note(getString(R.string.autostart_note))
 
-        button("8. Необязательно: сделать главным экраном (тогда при нажатии кнопки сразу открывается помощник)") {
+        button(getString(R.string.step_home)) {
             open(Intent(Settings.ACTION_HOME_SETTINGS))
         }
-        note("Совет: отключите блокировку экрана (Настройки → Безопасность → Блокировка экрана → Нет), чтобы дедушке не нужно было ничего смахивать.")
+        note(getString(R.string.lockscreen_tip))
 
-        button("Проверить голос") {
+        button(getString(R.string.test_voice)) {
             App.instance.speaker.say("Проверка голоса. Сейчас " + java.util.Calendar.getInstance().let {
                 Ru.clock(it.get(java.util.Calendar.HOUR_OF_DAY), it.get(java.util.Calendar.MINUTE))
             })
         }
 
         weatherSection()
+        wakeSection()
+        contactsReport()
 
-        title("Слово «Алёша»")
+        button(getString(R.string.done)) { finish() }
+    }
+
+    private fun languageSection() {
+        title(getString(R.string.lang_title))
+        val cur = Lang.code(this)
+        val names = mapOf("ru" to "Русский", "en" to "English", "zh" to "中文")
+        for (c in Lang.CODES) {
+            val label = names[c] ?: c
+            if (c == cur) tile("✓  $label", Tile.DONE) {} else button(label) {
+                Lang.set(this, c)
+                AleshaWidget.refresh(this)
+                KeeperService.start(this)
+                recreate()
+            }
+        }
+        note(getString(R.string.lang_note))
+    }
+
+    private fun isXiaomi(): Boolean {
+        val m = (Build.MANUFACTURER + " " + Build.BRAND).lowercase()
+        return listOf("xiaomi", "redmi", "poco").any { it in m }
+    }
+
+    /** На HyperOS/MIUI есть свои разрешения, без которых окно из фона не открывается. */
+    private fun xiaomiSection() {
+        title(getString(R.string.xiaomi_title))
+        button(getString(R.string.xiaomi_perms)) {
+            val i = Intent("miui.intent.action.APP_PERM_EDITOR")
+                .setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
+                .putExtra("extra_pkgname", packageName)
+            open(i)
+        }
+        button(getString(R.string.xiaomi_autostart)) {
+            open(Intent().setClassName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"))
+        }
+        note(getString(R.string.xiaomi_note))
+    }
+
+    private fun wakeSection() {
+        title(getString(R.string.wake_title))
         val always = Sleep.alwaysListen(this)
-        item(
-            if (always) "Слушать «Алёша» всегда, когда помощник не на экране (нажмите, чтобы только в отбое)"
-            else "Слушать «Алёша» только в отбое (нажмите, чтобы всегда)",
-            always
-        ) {
+        item(getString(if (always) R.string.wake_always else R.string.wake_sleep_only), always) {
             Sleep.setAlwaysListen(this, !always)
             KeeperService.start(this)
             rebuild()
         }
-        note("«Всегда» удобнее, но расходует батарею сильнее.")
-
-        contactsReport()
-
-        button("Готово — вернуться к помощнику") { finish() }
+        note(getString(R.string.wake_battery))
+        note(getString(R.string.wake_stats, Sleep.heardCount(this), Sleep.openedCount(this)))
+        note(getString(R.string.wake_stats_note))
+        button(getString(R.string.wake_stats_reset)) {
+            Sleep.resetCounts(this)
+            rebuild()
+        }
     }
 
     /** Погода: ключ Яндекс.Погоды и последняя ошибка. */
     private fun weatherSection() {
         val dp = resources.displayMetrics.density
-        title("Погода")
+        title(getString(R.string.weather_title))
         val key = Weather.yandexKey(this)
-        note(
-            if (key.isNullOrBlank()) "Сейчас погода берётся из Open-Meteo. Чтобы брать из Яндекса, вставьте ключ API Яндекс.Погоды (yandex.ru/dev/weather → личный кабинет → ключ)."
-            else "Погода берётся из Яндекса. Если Яндекс не ответит — из Open-Meteo."
-        )
+        note(getString(if (key.isNullOrBlank()) R.string.weather_openmeteo else R.string.weather_yandex))
         val field = android.widget.EditText(this).apply {
-            hint = "Ключ API Яндекс.Погоды"
+            hint = getString(R.string.weather_key_hint)
             setText(key ?: "")
             textSize = 17f
             setTextColor(Palette.MILK)
@@ -182,7 +222,7 @@ class SetupActivity : Activity() {
             setPadding((16 * dp).toInt(), (14 * dp).toInt(), (16 * dp).toInt(), (14 * dp).toInt())
         }
         box.addView(field, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = (10 * dp).toInt() })
-        button("Сохранить ключ и проверить погоду") {
+        button(getString(R.string.weather_save)) {
             Weather.setYandexKey(this, field.text.toString())
             App.instance.speaker.say("Проверяю погоду.")
             Weather.get(this) { text ->
@@ -190,24 +230,24 @@ class SetupActivity : Activity() {
                 rebuild()
             }
         }
-        Weather.lastError?.let { note("Последняя ошибка погоды: $it") }
+        Weather.lastError?.let { note(getString(R.string.weather_error, it)) }
     }
 
     /** Выбор голоса: каждый можно послушать, нажатие сразу выбирает. */
     private fun voiceSection() {
         val sp = App.instance.speaker
         val voices = sp.russianVoices()
-        title("Голос помощника")
+        title(getString(R.string.voice_title))
         if (voices.isEmpty()) {
-            note("Скачанных русских голосов нет. Нажмите пункт 5 и скачайте русский голос в настройках Google.")
+            note(getString(R.string.voice_none))
             return
         }
-        note("Нажмите на голос — он скажет фразу и станет голосом помощника. Выберите спокойный мужской. Если мужского нет: пункт 5 → Русский → скачайте ещё голоса.")
+        note(getString(R.string.voice_note))
         val current = sp.currentVoiceName
         voices.forEachIndexed { i, v ->
-            val label = "Голос ${i + 1}" + (if (v.name == current) " — выбран" else "")
+            val label = getString(R.string.voice_item, i + 1)
             if (v.name == current) {
-                tile("✓  $label", Tile.DONE) { sample(v.name) }
+                tile("✓  " + label + getString(R.string.voice_selected), Tile.DONE) { sample(v.name) }
             } else {
                 button(label) { sample(v.name) }
             }
@@ -225,10 +265,10 @@ class SetupActivity : Activity() {
         if (!Setup.granted(this, Manifest.permission.READ_CONTACTS)) return
         val people = Contacts.load(this)
         val ears = App.instance.ears
-        title("Контакты (${people.size})")
-        note("Помощник узнаёт контакт по словам из его имени. Лучше всего подписывать коротко: «Дочь», «Сын Андрей», «Соседка Валя». Крестик ✗ — слово не знает распознавание, переименуйте контакт.")
+        title(getString(R.string.contacts_title, people.size))
+        note(getString(R.string.contacts_note))
         if (ears.model == null) {
-            note("Проверка станет доступна после загрузки распознавания.")
+            note(getString(R.string.contacts_wait))
             return
         }
         for (p in people.take(60)) {

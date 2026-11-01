@@ -28,6 +28,7 @@ Android-приложение для почти незрячего пожилог
 - **Виджет:** большая кнопка на пол-экрана или весь экран (часы, дата, «Алёша»). Нажатие — помощник сразу слушает.
 - **Голос:** спокойный, мужской по умолчанию; любой скачанный русский голос можно выбрать в настройке.
 - **Погода:** из Яндекс.Погоды, если в настройке введён ключ API; иначе Open-Meteo, запасной — met.no.
+- **Язык интерфейса:** русский, английский или китайский (в настройке). Речь и голосовые команды — на русском.
 - Регистр и падежи не важны: «Дочь», «дочь», «дочери», «дочке» — один контакт.
 
 ## Установка
@@ -44,6 +45,10 @@ Android-приложение для почти незрячего пожилог
 - Настройки приложения → **Автозапуск** → включить.
 - Батарея → **Без ограничений**.
 - В списке недавних приложений закрепить помощника (значок замка).
+
+### Xiaomi / Poco / Redmi (HyperOS, MIUI)
+
+В настройке помощника есть раздел Xiaomi: включите «Всплывающие окна, когда запущено в фоне», «Экран блокировки» и «Автозапуск», а в батарее — «Нет ограничений». Без этого «Алёша» при выключенном экране срабатывает через раз. Счётчик «услышано / открылось» в настройке показывает, где именно теряется команда.
 
 ### Советы
 
@@ -86,6 +91,7 @@ An Android app for an elderly person who is almost blind. Everything works by vo
 - **Widget:** a half-screen or full-screen button with a clock and date; tapping it starts listening right away.
 - **Voice:** a calm male voice by default; any installed offline Russian voice can be picked in setup.
 - **Weather:** Yandex Weather when an API key is entered in setup, otherwise Open-Meteo with met.no as a backup.
+- **Interface language:** Russian, English or Chinese (in setup). Speech and voice commands stay in Russian.
 - Contact matching ignores letter case and Russian word endings, so "Дочь", "дочери" and "дочке" all match the same contact.
 
 ## Installation
@@ -94,6 +100,8 @@ An Android app for an elderly person who is almost blind. Everything works by vo
 2. Open "Помощник Алёша". The setup screen appears; tap every amber tile until it turns green.
 3. To reopen setup later, **hold a finger on the main screen for 5 seconds**.
 4. Widget: long-press the home screen → Widgets → "Алёша — большая кнопка", then resize it.
+
+On Xiaomi / Poco / Redmi (HyperOS, MIUI), use the Xiaomi section in setup to allow pop-up windows in the background, showing on the lock screen and autostart, and set battery to No restrictions; otherwise the wake word works unreliably with the screen off. A heard/opened counter in setup shows where it fails.
 
 On Tecno / Infinix (HiOS), also enable **Autostart**, set battery to **No restrictions**, and lock the app in the recent-apps list, or the system will stop it.
 

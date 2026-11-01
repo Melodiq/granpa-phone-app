@@ -20,7 +20,18 @@ class AleshaWidget : AppWidgetProvider() {
         for (id in ids) {
             val views = RemoteViews(ctx.packageName, R.layout.widget_alesha)
             views.setOnClickPendingIntent(R.id.widget_root, tap)
+            views.setTextViewText(R.id.widget_name, Lang.str(ctx, R.string.widget_name))
+            views.setTextViewText(R.id.widget_tap, Lang.str(ctx, R.string.widget_tap))
             manager.updateAppWidget(id, views)
+        }
+    }
+
+    companion object {
+        /** Перерисовать все виджеты (например, после смены языка). */
+        fun refresh(ctx: Context) {
+            val m = AppWidgetManager.getInstance(ctx)
+            val ids = m.getAppWidgetIds(android.content.ComponentName(ctx, AleshaWidget::class.java))
+            if (ids.isNotEmpty()) AleshaWidget().onUpdate(ctx, m, ids)
         }
     }
 }

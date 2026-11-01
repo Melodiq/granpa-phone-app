@@ -38,23 +38,25 @@
         android:layout_weight="1">
 
         <TextView
+            android:id="@+id/widget_name"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:background="@drawable/widget_lamp"
             android:fontFamily="sans-serif-black"
             android:gravity="center"
-            android:text="Алёша"
+            android:text="@string/widget_name"
             android:textColor="#0F2340"
             android:textSize="44sp" />
     </FrameLayout>
 
     <TextView
+        android:id="@+id/widget_tap"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-condensed"
         android:gravity="center"
-        android:text="Нажмите и говорите"
+        android:text="@string/widget_tap"
         android:textColor="#FFB627"
         android:textSize="30sp"
         android:textStyle="bold" />

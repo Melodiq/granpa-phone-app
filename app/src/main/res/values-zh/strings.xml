@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">阿廖沙助手</string>
+    <string name="widget_description">大按钮：点击后对阿廖沙说出命令</string>
+    <string name="widget_label">阿廖沙 — 大按钮</string>
+    <string name="widget_name">阿廖沙</string>
+    <string name="widget_tap">点击并说话</string>
+    <string name="setup_title">助手设置</string>
+    <string name="setup_intro">供家人使用。点击每个黄色方块并允许。带勾的绿色边框表示已完成。</string>
+    <string name="lang_title">界面语言</string>
+    <string name="lang_note">语音命令和助手的语音仍为俄语。</string>
+    <string name="step_permissions">1. 权限：麦克风、联系人、通话、接听电话、位置</string>
+    <string name="step_overlay">2. 显示在其他应用上层（按侧键时问候、语音接听电话）</string>
+    <string name="step_battery">3. 电池：无限制（否则系统会关闭助手）</string>
+    <string name="step_alarms">4. 精确提醒</string>
+    <string name="step_tts">5. 俄语语音。如果未打勾，请在文字转语音设置（Google）中安装</string>
+    <string name="asr_ready">✓ 6. 语音识别已就绪（离线可用）</string>
+    <string name="asr_error" formatted="true">✗ 6. 语音识别出错：%1$s</string>
+    <string name="asr_loading">… 6. 正在加载语音识别（首次启动最多一分钟）</string>
+    <string name="wake_known">✓ 能识别「Алёша」：说「отбой」助手休息，说「Алёша」唤醒</string>
+    <string name="wake_unknown">✗ 识别器不认识「Алёша」，请点击屏幕唤醒</string>
+    <string name="step_autostart">7. 自启动（Tecno/Infinix）：打开应用设置 → 开启「自启动」并允许后台运行</string>
+    <string name="autostart_note">在 Tecno 上还需：设置 → 电池 → 应用管理 → 本助手 → 无限制。并在最近任务中锁定应用（锁形图标），以免被清理。</string>
+    <string name="xiaomi_title">小米 / Poco / 红米</string>
+    <string name="xiaomi_perms">小米权限：开启「后台弹出界面」和「锁屏显示」</string>
+    <string name="xiaomi_autostart">小米自启动：为本助手开启</string>
+    <string name="xiaomi_note">没有这些权限，小米会在熄屏时阻止助手响应「Алёша」打开。另外：设置 → 应用 → 本助手 → 省电策略 → 无限制。</string>
+    <string name="step_home">8. 可选：设为主屏幕（按侧键即直接打开助手）</string>
+    <string name="lockscreen_tip">提示：关闭锁屏（设置 → 安全 → 锁屏 → 无），这样无需滑动解锁。</string>
+    <string name="test_voice">测试语音</string>
+    <string name="weather_title">天气</string>
+    <string name="weather_openmeteo">目前天气来自 Open-Meteo。如需使用 Yandex，请粘贴 Yandex 天气 API 密钥（yandex.ru/dev/weather → 账户 → 密钥）。</string>
+    <string name="weather_yandex">天气来自 Yandex，Yandex 无响应时使用 Open-Meteo。</string>
+    <string name="weather_key_hint">Yandex 天气 API 密钥</string>
+    <string name="weather_save">保存密钥并查看天气</string>
+    <string name="weather_error" formatted="true">最近的天气错误：%1$s</string>
+    <string name="wake_title">唤醒词「Алёша」</string>
+    <string name="wake_always">助手不在屏幕上时始终监听「Алёша」（点击改为仅休息时）</string>
+    <string name="wake_sleep_only">仅在休息时监听「Алёша」（点击改为始终）</string>
+    <string name="wake_battery">「始终」更方便，但更耗电。</string>
+    <string name="wake_stats" formatted="true">听到「Алёша」：%1$d 次，助手打开：%2$d 次</string>
+    <string name="wake_stats_note">若「听到」次数少于呼叫次数，说明后台麦克风受限（电池、小米权限）。若「打开」少于「听到」，说明系统阻止弹出窗口（小米：后台弹出界面）。</string>
+    <string name="wake_stats_reset">重置计数</string>
+    <string name="voice_title">助手语音</string>
+    <string name="voice_none">未下载俄语语音。点击第 5 项，在 Google 设置中下载俄语语音。</string>
+    <string name="voice_note">点击语音试听，并设为助手语音。请选择平静的男声。若没有：第 5 项 → 俄语 → 下载更多语音。</string>
+    <string name="voice_item" formatted="true">语音 %1$d</string>
+    <string name="voice_selected"> — 已选择</string>
+    <string name="contacts_title" formatted="true">联系人（%1$d）</string>
+    <string name="contacts_note">助手根据联系人名称中的词识别联系人。俄语短名称效果最好：«Дочь»、«Сын Андрей»。✗ 表示识别器不认识该词，请重命名联系人。</string>
+    <string name="contacts_wait">语音识别加载完成后即可检查。</string>
+    <string name="done">完成 — 返回助手</string>
+    <string name="main_idle">点击屏幕，说出您的需求</string>
+    <string name="hint_listen">请说话</string>
+    <string name="hint_idle">点击屏幕发出命令</string>
+    <string name="hint_sleep">呼叫我请说「Алёша」</string>
+    <string name="sleep_status">休息中</string>
+    <string name="sleep_hint">说「Алёша」或点击屏幕呼叫我</string>
+    <string name="status_listen">正在聆听…</string>
+    <string name="status_heard">已听到</string>
+    <string name="status_speak">正在说话…</string>
+    <string name="call_top">来电</string>
+    <string name="call_hint">说「ответить」接听\n或点击屏幕</string>
+    <string name="call_fail">无法接听。\n请按绿色按钮</string>
+    <string name="notif_channel">阿廖沙助手</string>
+    <string name="notif_on">阿廖沙助手正在运行</string>
+    <string name="notif_sleep">阿廖沙正在休息。请说「Алёша」</string>
+</resources>

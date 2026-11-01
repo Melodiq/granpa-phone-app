@@ -61,7 +61,9 @@ class KeeperService : Service() {
                 val grammar = Sleep.WAKE_PHRASES.mapNotNull { ears.fixPhrase(it) }
                 if (grammar.isEmpty()) { setWakeListening(false); return@whenReady }
                 setWakeListening(true)
-                ears.listen(grammar, 30_000) { text ->
+                // Реагируем уже на промежуточный результат: быстрее и надёжнее, чем ждать паузы.
+                val isWake = { t: String -> Ru.words(t).any { it in Sleep.WAKE_WORDS } }
+                ears.listen(grammar, 10 * 60_000, partial = isWake) { text ->
                     if (!shouldWakeListen()) { setWakeListening(false); return@listen }
                     val heard = Ru.words(text ?: "").any { it in Sleep.WAKE_WORDS }
                     if (heard) wakeByVoice() else handler.postDelayed(this, 150)
@@ -102,6 +104,7 @@ class KeeperService : Service() {
     }
 
     private fun wakeByVoice() {
+        Sleep.countHeard(this)
         stopWakeLoop()
         Sleep.set(this, false)
         updateNotification()
@@ -232,7 +235,7 @@ class KeeperService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26) {
             nm?.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Помощник Алёша", NotificationManager.IMPORTANCE_MIN)
+                NotificationChannel(CHANNEL, Lang.str(this, R.string.notif_channel), NotificationManager.IMPORTANCE_MIN)
             )
         }
         val open = PendingIntent.getActivity(
@@ -243,7 +246,7 @@ class KeeperService : Service() {
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL) else Notification.Builder(this)
         return builder
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle(if (sleeping) "Алёша отдыхает. Позовите: «Алёша»" else "Помощник Алёша работает")
+            .setContentTitle(Lang.str(this, if (sleeping) R.string.notif_sleep else R.string.notif_on))
             .setContentIntent(open)
             .setOngoing(true)
             .build()

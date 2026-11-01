@@ -83,7 +83,7 @@
         <receiver
             android:name=".AleshaWidget"
             android:exported="true"
-            android:label="Алёша — большая кнопка">
+            android:label="@string/widget_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
