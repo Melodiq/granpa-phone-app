@@ -68,4 +68,14 @@
     <string name="step_reader">9. Screen reading: Accessibility → «Alyosha: screen reading» → turn on</string>
     <string name="reader_note">Say «read the screen» (or «Alyosha, read the screen» while the assistant is hidden) to hear everything on screen. If the switch is greyed out: Settings → Apps → the assistant → ⋮ → «Allow restricted settings», then come back here.</string>
     <string name="reader_test">Test screen reading (in 3 seconds)</string>
+    <string name="name_title">How should I address you</string>
+    <string name="name_hint">For example: John</string>
+    <string name="name_save">Save the name and listen</string>
+    <string name="name_note">When you call «Alyosha», the assistant answers: «What can I do for you, John?» Leave it empty for no name.</string>
+    <string name="sens_title">Wake word sensitivity:</string>
+    <string name="sens_high">High — easy to call, but sometimes reacts to other speech</string>
+    <string name="sens_mid">Medium</string>
+    <string name="sens_low">Low — only a clearly spoken «Alyosha»</string>
+    <string name="sens_note">Hard to call? Go higher. Reacts to TV and videos? Go lower.</string>
+    <string name="wake_last" formatted="true">Last heard (word and confidence): %1$s</string>
 </resources>

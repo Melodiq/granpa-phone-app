@@ -20,8 +20,13 @@ object PhrEn : Phrases {
     private fun clock(c: Calendar) = SimpleDateFormat("h:mm a", Locale.US).format(c.time)
 
     // ---------- speech ----------
-    override fun greet(reminders: String?) = "Hello. " + (reminders?.let { "$it " } ?: "") + "I'm listening."
-    override fun wakeGreet(reminders: String?) = "Yes, I'm listening." + (reminders?.let { " $it" } ?: "")
+    override fun greet(reminders: String?, userName: String?) =
+        (if (userName != null) "Hello, $userName. " else "Hello. ") + (reminders?.let { "$it " } ?: "") + "I'm listening."
+    override fun wakeGreet(reminders: String?, userName: String?): String {
+        val ask = if (userName != null) listOf("What can I do for you, $userName?", "At your service, $userName.")
+        else listOf("What can I do for you?", "At your service.")
+        return ask.random() + (reminders?.let { " $it" } ?: "")
+    }
     override val notHeardRepeat = "I didn't catch that. Please repeat."
     override val tapWhenReady = "Tap the screen whenever you want to say something."
     override val notUnderstoodHint = "I didn't understand. Say, for example: call my daughter. Or: time. Or: weather."

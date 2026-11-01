@@ -27,8 +27,8 @@ interface Phrases {
     fun words(s: String): List<String>
 
     // ---------- что говорит помощник ----------
-    fun greet(reminders: String?): String
-    fun wakeGreet(reminders: String?): String
+    fun greet(reminders: String?, userName: String?): String
+    fun wakeGreet(reminders: String?, userName: String?): String
     val notHeardRepeat: String
     val tapWhenReady: String
     val notUnderstoodHint: String

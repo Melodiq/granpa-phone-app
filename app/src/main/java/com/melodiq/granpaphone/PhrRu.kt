@@ -14,8 +14,12 @@ object PhrRu : Phrases {
     private fun has(w: List<String>, vararg k: String) = k.any { it in w }
 
     // ---------- речь ----------
-    override fun greet(reminders: String?) = "Здравствуйте. " + (reminders?.let { "$it " } ?: "") + "Слушаю."
-    override fun wakeGreet(reminders: String?) = "Да, слушаю." + (reminders?.let { " $it" } ?: "")
+    override fun greet(reminders: String?, userName: String?) =
+        (if (userName != null) "Здравствуйте, $userName. " else "Здравствуйте. ") + (reminders?.let { "$it " } ?: "") + "Слушаю."
+    override fun wakeGreet(reminders: String?, userName: String?): String {
+        val ask = listOf("Чего изволите", "Чего пожелаете").random()
+        return (if (userName != null) "$ask, $userName?" else "$ask?") + (reminders?.let { " $it" } ?: "")
+    }
     override val notHeardRepeat = "Не расслышал. Повторите."
     override val tapWhenReady = "Коснитесь экрана, когда захотите что-то сказать."
     override val notUnderstoodHint = "Не понял. Скажите, например: позвони дочери. Или: время. Или: погода."

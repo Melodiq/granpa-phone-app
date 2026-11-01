@@ -16,7 +16,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 - **Нажать боковую кнопку** (экран включился) → «Здравствуйте. Слушаю.» и сигнал, можно говорить.
 - **Коснуться экрана** в любом месте или **нажать виджет** → сигнал, можно говорить.
-- **Сказать «Алёша»** → «Да, слушаю», даже при выключенном экране.
+- **Сказать «Алёша»** (или «Алексей») → «Чего изволите, Иван Петрович?», даже при выключенном экране. Имя задаётся в настройке.
 - **Пять быстрых касаний по кругу** → отбой на час.
 - После каждой команды звук и вибрация: команда услышана.
 - Помощник реагирует только на свой язык и только на уверенно сказанные слова: видео, телевизор и чужая речь его не будят.
@@ -88,6 +88,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 - Подписывайте контакты коротко: «Дочь», «Сын Андрей». В настройке видно, какие распознаются.
 - Отключите блокировку экрана.
 - «Алёша» постоянно слушается и расходует батарею. Можно оставить только «в отбое».
+- Если «Алёшу» трудно позвать или он срабатывает от телевизора, поменяйте чувствительность в настройке.
 - Погода: Open-Meteo, при сбое — MET Norway. Нужны интернет и геолокация.
 
 ---
@@ -98,7 +99,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 - **Press the side button** (the screen turns on) → a greeting and a beep, then speak.
 - **Tap anywhere** on the screen or **tap the widget** → a beep, then speak.
-- **Say "Alyosha"** or **"Alex"** → "Yes, I'm listening", even with the screen off.
+- **Say "Alyosha"** or **"Alex"** → "What can I do for you, John?", even with the screen off. The name is set in setup.
 - **Tap the circle five times quickly** → rest for an hour.
 - Every command is confirmed with a sound and a vibration.
 - The assistant reacts only to its own language and to clearly spoken words, so videos, TV and other speech don't wake it.
@@ -170,6 +171,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 - Keep contact names short. Setup shows which ones are recognized.
 - Turn off the screen lock.
 - Always listening for the wake word uses battery; you can limit it to rest mode.
+- If the wake word is hard to trigger or reacts to TV, change the sensitivity in setup.
 - Weather comes from Open-Meteo, with MET Norway as a fallback; it needs internet and location.
 
 ---
@@ -180,7 +182,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 
 - **按侧键**（屏幕亮起）→ 问候和提示音，然后说话。
 - **点击屏幕**任意位置或**点击小部件** → 提示音，然后说话。
-- **说「阿廖沙」**或**「小助手」** → 「在，我在听」，熄屏时也可以。
+- **说「阿廖沙」**或**「小助手」** → 「王爷爷，有什么吩咐？」，熄屏时也可以。称呼在设置中填写。
 - **快速点击圆圈五次** → 休息一小时。
 - 每条命令都有声音和振动确认。
 - 助手只响应所选语言中清晰说出的词，视频、电视和他人说话不会唤醒它。
@@ -252,6 +254,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 - 联系人名称越短越好。设置中可以看到哪些能被识别。
 - 关闭锁屏。
 - 始终监听唤醒词会耗电，可以改为仅在休息时监听。
+- 如果难以唤醒或被电视触发，请在设置中调整灵敏度。
 - 天气来自 Open-Meteo，失败时使用 MET Norway，需要网络和定位。
 
 ---

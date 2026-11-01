@@ -85,6 +85,7 @@ class SetupActivity : Activity() {
         note(getString(R.string.setup_intro))
 
         languageSection()
+        nameSection()
 
         item(getString(R.string.step_permissions), Setup.allPermissions(this)) {
             if (Build.VERSION.SDK_INT >= 23) requestPermissions(Setup.permissions(), 1)
@@ -158,6 +159,33 @@ class SetupActivity : Activity() {
         button(getString(R.string.done)) { finish() }
     }
 
+    /** Как обращаться к пользователю: «Чего изволите, Иван Петрович?» */
+    private fun nameSection() {
+        val dp = resources.displayMetrics.density
+        title(getString(R.string.name_title))
+        val field = android.widget.EditText(this).apply {
+            hint = getString(R.string.name_hint)
+            setText(Profile.name(this@SetupActivity) ?: "")
+            textSize = 20f
+            setTextColor(Palette.MILK)
+            setHintTextColor(Palette.MILK_DIM)
+            isSingleLine = true
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 12 * dp
+                setColor(Color.parseColor("#1C3A63"))
+            }
+            setPadding((16 * dp).toInt(), (14 * dp).toInt(), (16 * dp).toInt(), (14 * dp).toInt())
+        }
+        box.addView(field, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = (10 * dp).toInt() })
+        button(getString(R.string.name_save)) {
+            Profile.setName(this, field.text.toString())
+            App.instance.speaker.say(Phrases.of(this).wakeGreet(null, Profile.name(this)))
+            rebuild()
+        }
+        note(getString(R.string.name_note))
+    }
+
     private fun languageSection() {
         title(getString(R.string.lang_title))
         val cur = Lang.code(this)
@@ -206,6 +234,17 @@ class SetupActivity : Activity() {
             rebuild()
         }
         note(getString(R.string.wake_battery))
+        // Чувствительность к «Алёша».
+        note(getString(R.string.sens_title))
+        val sens = Profile.sensitivity(this)
+        listOf(R.string.sens_high, R.string.sens_mid, R.string.sens_low).forEachIndexed { i, res ->
+            if (i == sens) tile("✓  " + getString(res), Tile.DONE) {} else button(getString(res)) {
+                Profile.setSensitivity(this, i)
+                rebuild()
+            }
+        }
+        note(getString(R.string.sens_note))
+        Profile.lastWake?.let { note(getString(R.string.wake_last, it)) }
         note(getString(R.string.wake_stats, Sleep.heardCount(this), Sleep.openedCount(this)))
         note(getString(R.string.wake_stats_note))
         button(getString(R.string.wake_stats_reset)) {

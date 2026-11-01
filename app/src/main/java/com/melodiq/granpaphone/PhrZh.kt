@@ -25,8 +25,12 @@ object PhrZh : Phrases {
     )
 
     // ---------- 语音 ----------
-    override fun greet(reminders: String?) = "您好。" + (reminders ?: "") + "我在听。"
-    override fun wakeGreet(reminders: String?) = "在，我在听。" + (reminders ?: "")
+    override fun greet(reminders: String?, userName: String?) =
+        (if (userName != null) "${userName}，您好。" else "您好。") + (reminders ?: "") + "我在听。"
+    override fun wakeGreet(reminders: String?, userName: String?): String {
+        val ask = listOf("有什么吩咐", "您需要什么").random()
+        return (if (userName != null) "${userName}，$ask？" else "$ask？") + (reminders ?: "")
+    }
     override val notHeardRepeat = "没听清，请再说一遍。"
     override val tapWhenReady = "想说话的时候，请点击屏幕。"
     override val notUnderstoodHint = "没听懂。您可以说：给女儿打电话，或者：几点了，或者：天气。"

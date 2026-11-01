@@ -69,7 +69,15 @@ class KeeperService : Service() {
                 // Строгий отбор: слово должно прозвучать уверенно и без потока посторонней речи —
                 // тогда не срабатывает от видео, телевизора и другого языка.
                 val accept = { h: Hyp ->
-                    h.confident({ phr.isWake(it) || phr.isReadScreen(it) }, 0.75, 1, 6)
+                    val (minConf, maxUnk) = Profile.wakeThreshold(this@KeeperService)
+                    val ok = h.confident({ phr.isWake(it) || phr.isReadScreen(it) }, minConf, maxUnk, 7)
+                    // Для настройки: что именно услышали и с какой уверенностью.
+                    val hit = h.words.filter { phr.isWake(it.first) || phr.isReadScreen(it.first) }
+                    if (hit.isNotEmpty() || phr.isWake(h.text)) {
+                        Profile.lastWake = h.words.joinToString(" ") { "${it.first} ${"%.2f".format(it.second)}" } +
+                            if (ok) " ✓" else " ✗"
+                    }
+                    ok
                 }
                 ears.listen(grammar, 10 * 60_000, accept = accept) { text ->
                     if (!shouldWakeListen()) { setWakeListening(false); return@listen }

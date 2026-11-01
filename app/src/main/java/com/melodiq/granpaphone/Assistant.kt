@@ -79,7 +79,7 @@ class Assistant(private val act: MainActivity) {
         stopAll()
         val rem = Reminders.take(act)
         if (rem != null) lastAnswer = rem
-        say(phr.greet(rem)) { listenCommand(0) }
+        say(phr.greet(rem, Profile.name(act))) { listenCommand(0) }
     }
 
     /** Разбудили словом «Алёша» или касанием во сне. */
@@ -87,7 +87,7 @@ class Assistant(private val act: MainActivity) {
         stopAll()
         val rem = Reminders.take(act)
         if (rem != null) lastAnswer = rem
-        say(phr.wakeGreet(rem)) { listenCommand(0) }
+        say(phr.wakeGreet(rem, Profile.name(act))) { listenCommand(0) }
     }
 
     /** Отбой на время без голоса (пять касаний по кругу). */
