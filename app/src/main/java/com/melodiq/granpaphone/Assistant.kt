@@ -90,6 +90,13 @@ class Assistant(private val act: MainActivity) {
         say(phr.wakeGreet(rem)) { listenCommand(0) }
     }
 
+    /** Отбой на время без голоса (пять касаний по кругу). */
+    fun sleepFor(minutes: Int) {
+        stopAll()
+        sp.beepHeard()
+        say(phr.sleepAnnounce(minutes)) { act.goToSleep(minutes) }
+    }
+
     /** Нажали на экран: сразу слушаем, без лишних слов. */
     fun onTap() {
         stopAll()

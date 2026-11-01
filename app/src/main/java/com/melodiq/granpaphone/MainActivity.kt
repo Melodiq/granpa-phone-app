@@ -137,7 +137,9 @@ class MainActivity : Activity() {
                 }
                 MotionEvent.ACTION_UP -> {
                     handler.removeCallbacks(longPress)
-                    if (!longPressFired) onTap()
+                    if (!longPressFired) {
+                        if (onLamp(e)) lampTap() else onTap()
+                    }
                 }
                 MotionEvent.ACTION_CANCEL -> handler.removeCallbacks(longPress)
             }
@@ -145,6 +147,32 @@ class MainActivity : Activity() {
         }
         updateClock()
         setState(LampState.IDLE, getString(R.string.main_idle))
+    }
+
+    // ---------- пять быстрых касаний по кругу — отбой на час ----------
+
+    private var lampTaps = 0
+    private var lastLampTap = 0L
+    private val delayedTap = Runnable { lampTaps = 0; onTap() }
+
+    private fun onLamp(e: MotionEvent): Boolean {
+        val x = e.x - lamp.left
+        val y = e.y - lamp.top
+        return x >= 0 && y >= 0 && x <= lamp.width && y <= lamp.height
+    }
+
+    /** Касание по кругу ждёт чуть-чуть: вдруг это серия из пяти. */
+    private fun lampTap() {
+        val now = System.currentTimeMillis()
+        lampTaps = if (now - lastLampTap < 700) lampTaps + 1 else 1
+        lastLampTap = now
+        handler.removeCallbacks(delayedTap)
+        if (lampTaps >= 5) {
+            lampTaps = 0
+            if (!Sleep.isOn(this)) assistant.sleepFor(60)
+            return
+        }
+        handler.postDelayed(delayedTap, 400)
     }
 
     private fun onTap() {

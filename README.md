@@ -17,6 +17,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 - **Нажать боковую кнопку** (экран включился) → «Здравствуйте. Слушаю.» и сигнал, можно говорить.
 - **Коснуться экрана** в любом месте или **нажать виджет** → сигнал, можно говорить.
 - **Сказать «Алёша»** → «Да, слушаю», даже при выключенном экране.
+- **Пять быстрых касаний по кругу** → отбой на час.
 - После каждой команды звук и вибрация: команда услышана.
 
 ### Команды
@@ -96,6 +97,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 - **Press the side button** (the screen turns on) → a greeting and a beep, then speak.
 - **Tap anywhere** on the screen or **tap the widget** → a beep, then speak.
 - **Say "Alyosha"** or **"Alex"** → "Yes, I'm listening", even with the screen off.
+- **Tap the circle five times quickly** → rest for an hour.
 - Every command is confirmed with a sound and a vibration.
 
 ### Commands (English mode)
@@ -175,6 +177,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 - **按侧键**（屏幕亮起）→ 问候和提示音，然后说话。
 - **点击屏幕**任意位置或**点击小部件** → 提示音，然后说话。
 - **说「阿廖沙」**或**「小助手」** → 「在，我在听」，熄屏时也可以。
+- **快速点击圆圈五次** → 休息一小时。
 - 每条命令都有声音和振动确认。
 
 ### 命令（中文模式）
