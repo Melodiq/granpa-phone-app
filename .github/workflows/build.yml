@@ -1,0 +1,63 @@
+name: Сборка APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Кэш модели распознавания
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: model-ru
+          key: vosk-model-small-ru-0.22
+
+      - name: Скачать модель Vosk (русский, офлайн)
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o model.zip https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
+          unzip -q model.zip
+          mv vosk-model-small-ru-0.22 model-ru
+
+      - name: Положить модель в assets
+        run: |
+          mkdir -p app/src/main/assets
+          cp -r model-ru app/src/main/assets/model-ru
+          echo "small-ru-0.22" > app/src/main/assets/model-ru/uuid
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Сборка
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Переименовать APK
+        run: cp app/build/outputs/apk/release/app-release.apk granpa-phone.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: granpa-phone-apk
+          path: granpa-phone.apk
+
+      - name: Выложить в Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Версия ${{ github.run_number }}
+          files: granpa-phone.apk
+          make_latest: true
