@@ -33,6 +33,62 @@ class KeeperService : Service() {
     private var ringName = ""
     private var lastCallEnd = 0L
     private var phoneListener: PhoneStateListener? = null
+    private var wakeListening = false
+
+    /** Во сне: слушать слово «Алёша» по кругу. */
+    private val wakeLoop = object : Runnable {
+        override fun run() {
+            if (!Sleep.isOn(this@KeeperService) || callState != TelephonyManager.CALL_STATE_IDLE) {
+                wakeListening = false
+                return
+            }
+            val ears = App.instance.ears
+            ears.whenReady {
+                if (!Sleep.isOn(this@KeeperService) || callState != TelephonyManager.CALL_STATE_IDLE) return@whenReady
+                val grammar = Sleep.WAKE_PHRASES.mapNotNull { ears.fixPhrase(it) }
+                if (grammar.isEmpty()) { wakeListening = false; return@whenReady }
+                wakeListening = true
+                ears.listen(grammar, 30_000) { text ->
+                    if (!Sleep.isOn(this@KeeperService)) { wakeListening = false; return@listen }
+                    val heard = Ru.words(text ?: "").any { it in Sleep.WAKE_WORDS }
+                    if (heard) wakeByVoice() else handler.postDelayed(this, 150)
+                }
+            }
+        }
+    }
+
+    private fun startWakeLoop(delay: Long) {
+        handler.removeCallbacks(wakeLoop)
+        handler.postDelayed(wakeLoop, delay)
+    }
+
+    private fun stopWakeLoop() {
+        handler.removeCallbacks(wakeLoop)
+        if (wakeListening) {
+            wakeListening = false
+            // Если главный экран уже открыт, микрофоном пользуется он — не обрываем.
+            if (!App.activityVisible) App.instance.ears.stop()
+        }
+    }
+
+    private fun wakeByVoice() {
+        stopWakeLoop()
+        Sleep.set(this, false)
+        startFg()
+        App.instance.speaker.beepHeard()
+        val canOpen = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
+        if (canOpen) {
+            try {
+                startActivity(
+                    Intent(this, MainActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        .putExtra(MainActivity.EXTRA_WAKE, true)
+                )
+                return
+            } catch (_: Exception) {}
+        }
+        App.instance.speaker.say("Я проснулся. Коснитесь экрана, чтобы сказать команду.")
+    }
 
     private val announce = object : Runnable {
         override fun run() {
@@ -69,7 +125,7 @@ class KeeperService : Service() {
 
     private val openAssistant = Runnable {
         val afterCall = System.currentTimeMillis() - lastCallEnd < 10_000
-        if (callState == TelephonyManager.CALL_STATE_IDLE && !afterCall) {
+        if (callState == TelephonyManager.CALL_STATE_IDLE && !afterCall && !Sleep.isOn(this)) {
             val canOpen = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
             if (canOpen) {
                 try {
@@ -99,6 +155,7 @@ class KeeperService : Service() {
     override fun onCreate() {
         super.onCreate()
         startFg()
+        if (Sleep.isOn(this)) startWakeLoop(2000)
         Calls.restoreRinger(this) // на случай, если прошлый раз служба упала во время звонка
         val f = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_ON)
@@ -109,7 +166,20 @@ class KeeperService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startFg()
+        when (intent?.action) {
+            ACTION_SLEEP -> {
+                startFg()
+                startWakeLoop(1500) // дать договорить «Отбой…»
+            }
+            ACTION_WAKE -> {
+                stopWakeLoop()
+                startFg()
+            }
+            else -> {
+                startFg()
+                if (Sleep.isOn(this) && !wakeListening) startWakeLoop(2000)
+            }
+        }
         if (phoneListener == null) listenPhone()
         return START_STICKY
     }
@@ -123,11 +193,13 @@ class KeeperService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /** Во сне нужен доступ к микрофону из фона — служба объявляет тип «микрофон». */
     private fun startFg() {
+        val sleeping = Sleep.isOn(this)
         val nm = getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26) {
             nm?.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Голосовой помощник", NotificationManager.IMPORTANCE_MIN)
+                NotificationChannel(CHANNEL, "Помощник Алёша", NotificationManager.IMPORTANCE_MIN)
             )
         }
         val open = PendingIntent.getActivity(
@@ -138,14 +210,18 @@ class KeeperService : Service() {
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL) else Notification.Builder(this)
         val n = builder
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("Голосовой помощник работает")
+            .setContentTitle(if (sleeping) "Алёша отдыхает — скажите «Алёша»" else "Помощник Алёша работает")
             .setContentIntent(open)
             .setOngoing(true)
             .build()
-        val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
+        val base = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
+        val mic = if (sleeping && Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
         try {
-            ServiceCompat.startForeground(this, 1, n, type)
-        } catch (_: Exception) {}
+            ServiceCompat.startForeground(this, 1, n, base or mic)
+        } catch (_: Exception) {
+            // Из фона Android может не дать тип «микрофон» (например, после перезагрузки).
+            try { ServiceCompat.startForeground(this, 1, n, base) } catch (_: Exception) {}
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -158,6 +234,7 @@ class KeeperService : Service() {
                 when (state) {
                     TelephonyManager.CALL_STATE_RINGING -> {
                         handler.removeCallbacks(openAssistant)
+                        stopWakeLoop()
                         ringName = Contacts.nameFor(this@KeeperService, phoneNumber)
                         if (was != TelephonyManager.CALL_STATE_RINGING) {
                             handler.removeCallbacks(announce)
@@ -170,13 +247,17 @@ class KeeperService : Service() {
                         }
                     }
                     TelephonyManager.CALL_STATE_OFFHOOK -> {
+                        stopWakeLoop()
                         stopRinging()
                         handler.removeCallbacks(openAssistant)
                         if (was == TelephonyManager.CALL_STATE_RINGING) App.instance.speaker.stop()
                     }
                     else -> {
                         stopRinging()
-                        if (was != TelephonyManager.CALL_STATE_IDLE) lastCallEnd = System.currentTimeMillis()
+                        if (was != TelephonyManager.CALL_STATE_IDLE) {
+                            lastCallEnd = System.currentTimeMillis()
+                            if (Sleep.isOn(this@KeeperService)) startWakeLoop(3000)
+                        }
                     }
                 }
             }
@@ -198,6 +279,16 @@ class KeeperService : Service() {
 
     companion object {
         private const val CHANNEL = "keeper"
+        private const val ACTION_SLEEP = "com.melodiq.granpaphone.SLEEP"
+        private const val ACTION_WAKE = "com.melodiq.granpaphone.WAKE"
+
+        fun sleep(ctx: Context) {
+            startFgService(ctx, Intent(ctx, KeeperService::class.java).setAction(ACTION_SLEEP))
+        }
+
+        fun wake(ctx: Context) {
+            startFgService(ctx, Intent(ctx, KeeperService::class.java).setAction(ACTION_WAKE))
+        }
 
         fun start(ctx: Context) {
             startFgService(ctx, Intent(ctx, KeeperService::class.java))

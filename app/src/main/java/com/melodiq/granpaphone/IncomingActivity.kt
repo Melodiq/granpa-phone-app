@@ -3,7 +3,7 @@ package com.melodiq.granpaphone
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.graphics.Color
+import android.graphics.Typeface
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -12,7 +12,9 @@ import android.os.Looper
 import android.telecom.TelecomManager
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
+import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
@@ -22,7 +24,10 @@ import android.widget.TextView
  */
 class IncomingActivity : Activity() {
 
-    private lateinit var label: TextView
+    private lateinit var root: LinearLayout
+    private lateinit var who: TextView
+    private lateinit var lamp: LampView
+    private lateinit var hint: TextView
     private val handler = Handler(Looper.getMainLooper())
     private var name = ""
     private var session = 0
@@ -40,25 +45,61 @@ class IncomingActivity : Activity() {
             @Suppress("DEPRECATION")
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
         }
-        label = TextView(this).apply {
-            textSize = 40f
-            setTextColor(Color.GREEN)
-            setBackgroundColor(Color.BLACK)
+        val dp = resources.displayMetrics.density
+        val condensed = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+        val medium = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        val top = TextView(this).apply {
+            text = "Звонит"
+            typeface = medium
+            textSize = 26f
+            setTextColor(Palette.MILK_DIM)
             gravity = Gravity.CENTER
-            setPadding(48, 48, 48, 48)
         }
-        setContentView(label)
-        label.setOnTouchListener { _, e ->
+        who = TextView(this).apply {
+            typeface = condensed
+            textSize = 56f
+            setTextColor(Palette.MILK)
+            gravity = Gravity.CENTER
+            maxLines = 2
+            setLineSpacing(0f, 1.0f)
+        }
+        lamp = LampView(this).apply {
+            state = LampState.CALL
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+        hint = TextView(this).apply {
+            text = "Скажите «ответить»\nили коснитесь экрана"
+            typeface = condensed
+            textSize = 32f
+            setTextColor(Palette.MINT)
+            gravity = Gravity.CENTER
+            setLineSpacing(0f, 1.08f)
+        }
+        root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Palette.NIGHT)
+            setPadding((24 * dp).toInt(), (40 * dp).toInt(), (24 * dp).toInt(), (40 * dp).toInt())
+            addView(top, LinearLayout.LayoutParams(-1, -2))
+            addView(who, LinearLayout.LayoutParams(-1, -2))
+            addView(lamp, LinearLayout.LayoutParams(-1, 0, 1f).apply {
+                topMargin = (16 * dp).toInt(); bottomMargin = (16 * dp).toInt()
+            })
+            addView(hint, LinearLayout.LayoutParams(-1, -2))
+        }
+        setContentView(root)
+        window.statusBarColor = Palette.NIGHT
+        window.navigationBarColor = Palette.NIGHT
+        root.setOnTouchListener { _, e ->
             if (e.actionMasked == MotionEvent.ACTION_UP) answer()
             true
         }
-        name = intent.getStringExtra(EXTRA_NAME) ?: ""
+        setName(intent.getStringExtra(EXTRA_NAME) ?: "")
         current = this
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        intent.getStringExtra(EXTRA_NAME)?.let { name = it }
+        intent.getStringExtra(EXTRA_NAME)?.let { setName(it) }
     }
 
     override fun onResume() {
@@ -81,10 +122,15 @@ class IncomingActivity : Activity() {
         super.onDestroy()
     }
 
+    private fun setName(n: String) {
+        name = n
+        who.text = n
+        lamp.letter = n.firstOrNull { it.isLetter() }?.uppercaseChar()?.toString() ?: ""
+        root.contentDescription = "Звонит: $n. Коснитесь экрана, чтобы ответить."
+    }
+
     private fun loop() {
         val s = ++session
-        label.text = "Звонит:\n$name\n\nКоснитесь экрана,\nчтобы ответить"
-        label.contentDescription = label.text
         val phrase = if (rounds == 0) "Звонит: $name. Скажите: ответить. Или: сбросить." else "Звонит: $name."
         rounds++
         sp.say(phrase) {
@@ -94,7 +140,7 @@ class IncomingActivity : Activity() {
                 return@say
             }
             sp.beepListen()
-            ears.listen(GRAMMAR.filter { p -> Ru.words(p).all { ears.knows(it) } }, 4500) { text ->
+            ears.listen(GRAMMAR.mapNotNull { ears.fixPhrase(it) }, 4500) { text ->
                 if (s != session) return@listen
                 val w = Ru.words(text ?: "")
                 when {
@@ -114,7 +160,9 @@ class IncomingActivity : Activity() {
         if (Calls.answer(this)) {
             finish()
         } else {
-            label.text = "Не получилось ответить.\nНажмите зелёную кнопку"
+            lamp.state = LampState.ERROR
+            hint.setTextColor(Palette.ROSE)
+            hint.text = "Не получилось ответить.\nНажмите зелёную кнопку"
             sp.say("Не получилось ответить сам. Нажмите зелёную кнопку.")
             handler.postDelayed({ finish() }, 2500)
         }

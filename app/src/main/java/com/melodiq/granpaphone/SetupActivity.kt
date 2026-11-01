@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -57,10 +56,10 @@ class SetupActivity : Activity() {
         box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(32, 48, 32, 48)
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(Palette.NIGHT)
         }
         setContentView(ScrollView(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(Palette.NIGHT)
             addView(box)
         })
     }
@@ -79,7 +78,7 @@ class SetupActivity : Activity() {
     private fun rebuild() {
         box.removeAllViews()
         title("Настройка помощника")
-        note("Для родственников. Пройдите все пункты сверху вниз. Зелёная галочка — готово.")
+        note("Для родственников. Нажмите на каждую жёлтую плашку и разрешите. Зелёная рамка с галочкой — готово.")
 
         item("1. Разрешения: микрофон, контакты, звонки, ответ на звонки, геолокация", Setup.allPermissions(this)) {
             if (Build.VERSION.SDK_INT >= 23) requestPermissions(Setup.permissions(), 1)
@@ -112,16 +111,21 @@ class SetupActivity : Activity() {
 
         val ears = App.instance.ears
         val earsText = when {
-            ears.model != null -> "✅ 6. Распознавание речи готово (работает без интернета)"
-            ears.error != null -> "❌ 6. Распознавание речи: ошибка — " + ears.error
-            else -> "⏳ 6. Распознавание речи загружается… (первый запуск до минуты)"
+            ears.model != null -> "✓ 6. Распознавание речи готово (работает без интернета)"
+            ears.error != null -> "✗ 6. Распознавание речи: ошибка — " + ears.error
+            else -> "… 6. Распознавание речи загружается… (первый запуск до минуты)"
         }
         note(earsText)
+        if (ears.model != null) {
+            val wakeOk = Sleep.WAKE_PHRASES.any { ears.fixPhrase(it) != null }
+            note(if (wakeOk) "✓ Слово «Алёша» распознаётся: «отбой» — помощник отдыхает, «Алёша» — просыпается"
+                 else "✗ Слово «Алёша» распознавание не знает — будить можно касанием экрана")
+        }
 
         button("7. Автозапуск (Tecno/Infinix): откроются настройки приложения → включите «Автозапуск» и разрешите работу в фоне") {
             open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }
-        note("Также на Tecno: Настройки → Батарея → Управление приложениями → «Голосовой телефон» → Без ограничений. И закрепите приложение в списке недавних (замок), чтобы его не закрывала очистка.")
+        note("Также на Tecno: Настройки → Батарея → Управление приложениями → «Помощник Алёша» → Без ограничений. И закрепите приложение в списке недавних (замок), чтобы его не закрывала очистка.")
 
         button("8. Необязательно: сделать главным экраном (тогда при нажатии кнопки сразу открывается помощник)") {
             open(Intent(Settings.ACTION_HOME_SETTINGS))
@@ -144,14 +148,14 @@ class SetupActivity : Activity() {
         val people = Contacts.load(this)
         val ears = App.instance.ears
         title("Контакты (${people.size})")
-        note("Помощник узнаёт контакт по словам из его имени. Лучше всего подписывать коротко: «Дочь», «Сын Андрей», «Соседка Валя». Красный крестик — слово не знает распознавание, переименуйте контакт.")
+        note("Помощник узнаёт контакт по словам из его имени. Лучше всего подписывать коротко: «Дочь», «Сын Андрей», «Соседка Валя». Крестик ✗ — слово не знает распознавание, переименуйте контакт.")
         if (ears.model == null) {
             note("Проверка станет доступна после загрузки распознавания.")
             return
         }
         for (p in people.take(60)) {
             val ok = p.nameWords.any { w -> ears.knows(w) }
-            note((if (ok) "✅ " else "❌ ") + p.name)
+            note((if (ok) "✓ " else "✗ ") + p.name)
         }
     }
 
@@ -172,7 +176,7 @@ class SetupActivity : Activity() {
             text = t
             textSize = 26f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.YELLOW)
+            setTextColor(Palette.MILK)
             setPadding(0, 32, 0, 16)
         })
     }
@@ -181,23 +185,44 @@ class SetupActivity : Activity() {
         box.addView(TextView(this).apply {
             text = t
             textSize = 17f
-            setTextColor(Color.WHITE)
+            setTextColor(Palette.MILK_DIM)
             setPadding(0, 8, 0, 16)
         })
     }
 
+    /** Шаг настройки: не готово — янтарная плашка (надо нажать), готово — спокойная с галочкой. */
     private fun item(t: String, ok: Boolean, onClick: () -> Unit) {
-        button((if (ok) "✅ " else "❌ ") + t, onClick)
+        tile((if (ok) "✓  " else "") + t, if (ok) Tile.DONE else Tile.TODO, onClick)
     }
 
     private fun button(t: String, onClick: () -> Unit) {
-        box.addView(Button(this).apply {
+        tile(t, Tile.NEUTRAL, onClick)
+    }
+
+    private enum class Tile { TODO, DONE, NEUTRAL }
+
+    private fun tile(t: String, kind: Tile, onClick: () -> Unit) {
+        val dp = resources.displayMetrics.density
+        val bg = android.graphics.drawable.GradientDrawable().apply {
+            cornerRadius = 14 * dp
+            when (kind) {
+                Tile.TODO -> setColor(Palette.AMBER)
+                Tile.DONE -> { setColor(Palette.NIGHT); setStroke((2 * dp).toInt(), Palette.MINT) }
+                Tile.NEUTRAL -> setColor(Color.parseColor("#1C3A63"))
+            }
+        }
+        box.addView(TextView(this).apply {
             text = t
             textSize = 18f
-            isAllCaps = false
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setTextColor(when (kind) { Tile.TODO -> Palette.NIGHT; Tile.DONE -> Palette.MINT; Tile.NEUTRAL -> Palette.MILK })
+            background = bg
+            setPadding((18 * dp).toInt(), (16 * dp).toInt(), (18 * dp).toInt(), (16 * dp).toInt())
+            isClickable = true
+            isFocusable = true
             setOnClickListener { onClick() }
         }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-            bottomMargin = 16
+            bottomMargin = (12 * dp).toInt()
         })
     }
 }

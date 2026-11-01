@@ -68,7 +68,32 @@ class Ears(private val ctx: Context) {
         synchronized(waiters) { waiters.add(cb) }
     }
 
-    fun knows(word: String): Boolean = vocab?.contains(word) ?: true
+    fun knows(word: String): Boolean = spell(word) != null
+
+    /**
+     * Написание слова так, как его знает модель: пробуем как есть, затем с «ё» вместо «е».
+     * null — модель это слово не знает.
+     */
+    fun spell(word: String): String? {
+        val v = vocab ?: return word
+        if (word in v) return word
+        for (i in word.indices) {
+            if (word[i] == 'е') {
+                val w2 = word.substring(0, i) + 'ё' + word.substring(i + 1)
+                if (w2 in v) return w2
+            }
+        }
+        return null
+    }
+
+    /** Фраза в написании модели или null, если хоть одно слово незнакомо. */
+    fun fixPhrase(phrase: String): String? {
+        val parts = phrase.trim().split(' ').filter { it.isNotEmpty() }
+        if (parts.isEmpty()) return null
+        val out = ArrayList<String>(parts.size)
+        for (p in parts) out.add(spell(p) ?: return null)
+        return out.joinToString(" ")
+    }
 
     /**
      * Слушать одну фразу.

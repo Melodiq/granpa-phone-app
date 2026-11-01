@@ -22,7 +22,10 @@ class Assistant(private val act: MainActivity) {
     private fun say(text: String, then: (() -> Unit)? = null) {
         act.show(text)
         val s = session
-        sp.say(text) { if (s == session) then?.invoke() }
+        sp.say(text) {
+            if (s != session) return@say
+            if (then != null) then() else act.setState(LampState.IDLE)
+        }
     }
 
     /** Ответ, который можно повторить командой «повтори». */
@@ -45,10 +48,13 @@ class Assistant(private val act: MainActivity) {
             return
         }
         sp.beepListen()
-        act.show("Слушаю…")
+        act.setState(LampState.LISTEN, "Слушаю…")
         ears.listen(grammar, timeoutMs) { text ->
             if (s != session) return@listen
-            if (text != null) sp.beepHeard()
+            if (text != null) {
+                sp.beepHeard()
+                act.setState(LampState.HEARD, "«$text»", "Услышал")
+            }
             cb(text)
         }
     }
@@ -75,6 +81,14 @@ class Assistant(private val act: MainActivity) {
         say(text) { listenCommand(0) }
     }
 
+    /** Разбудили словом «Алёша» или касанием во сне. */
+    fun wakeGreet() {
+        stopAll()
+        val rem = Reminders.take(act)
+        if (rem != null) lastAnswer = rem
+        say("Да, слушаю." + (rem?.let { " $it" } ?: "")) { listenCommand(0) }
+    }
+
     /** Нажали на экран: сразу слушаем, без лишних слов. */
     fun onTap() {
         stopAll()
@@ -85,7 +99,7 @@ class Assistant(private val act: MainActivity) {
         listen(commandGrammar(), 8000) { text ->
             if (text == null) {
                 if (attempt == 0) say("Не расслышал. Повторите.") { listenCommand(1) }
-                else say("Нажмите на экран, когда захотите что-то сказать.")
+                else say("Коснитесь экрана, когда захотите что-то сказать.")
             } else {
                 handle(text, attempt)
             }
@@ -102,6 +116,7 @@ class Assistant(private val act: MainActivity) {
         "удали запись", "удалить запись", "удали",
         "какое сегодня число", "какой сегодня день", "какое число", "дата",
         "повтори", "еще раз", "помощь", "что ты умеешь", "отмена", "стоп", "нет", "да",
+        "отбой", "спать", "отдыхай", "отдохни", "иди спать",
         "позвонить", "позвони", "набери", "звонок"
     )
 
@@ -111,7 +126,7 @@ class Assistant(private val act: MainActivity) {
         grammar?.let { return it }
         val out = LinkedHashSet<String>()
         fun addIfKnown(p: String) {
-            if (Ru.words(p).all { ears.knows(it) }) out.add(p)
+            ears.fixPhrase(p)?.let { out.add(it) }
         }
         basePhrases.forEach { addIfKnown(it) }
         for (p in people) {
@@ -134,6 +149,7 @@ class Assistant(private val act: MainActivity) {
     private fun handle(text: String, attempt: Int) {
         val w = Ru.words(text)
         when {
+            w.any { it in Sleep.SLEEP_WORDS } -> say("Отбой. Чтобы позвать меня, скажите: Алёша.") { act.goToSleep() }
             has(w, "отмена", "стоп") -> say("Хорошо.")
             has(w, "повтори") || (has(w, "еще") && has(w, "раз")) -> say(lastAnswer ?: "Пока нечего повторять.")
             has(w, "помощь", "умеешь") -> answer(HELP)
@@ -196,7 +212,7 @@ class Assistant(private val act: MainActivity) {
     )
 
     private fun askYesNo(attempt: Int = 0, cb: (Boolean?) -> Unit) {
-        listen(yesNoGrammar.filter { p -> Ru.words(p).all { ears.knows(it) } }, 6000) { text ->
+        listen(yesNoGrammar.mapNotNull { ears.fixPhrase(it) }, 6000) { text ->
             val w = text?.let { Ru.words(it) } ?: emptyList()
             val ans: Boolean? = when {
                 w.isEmpty() -> null
@@ -230,7 +246,7 @@ class Assistant(private val act: MainActivity) {
             if (s != session) return@get
             lastAnswer = text
             act.show(text)
-            sp.say(text, flush = false)
+            sp.say(text, flush = false) { if (s == session) act.setState(LampState.IDLE) }
         }
     }
 
@@ -325,6 +341,7 @@ class Assistant(private val act: MainActivity) {
             "Рассказать погоду: скажите погода. " +
             "Записать дело: скажите запиши. Рассказать дела: что у меня сегодня, или что у меня завтра. " +
             "Удалить запись: скажите удали запись. Повторить последний ответ: скажите повтори. " +
+            "Чтобы я отдохнул, скажите: отбой. Чтобы позвать снова, скажите: Алёша. " +
             "Чтобы сказать команду, нажмите в любом месте экрана."
     }
 }
