@@ -19,6 +19,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 - **Сказать «Алёша»** → «Да, слушаю», даже при выключенном экране.
 - **Пять быстрых касаний по кругу** → отбой на час.
 - После каждой команды звук и вибрация: команда услышана.
+- Помощник реагирует только на свой язык и только на уверенно сказанные слова: видео, телевизор и чужая речь его не будят.
 
 ### Команды
 
@@ -41,7 +42,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 ### Чтение экрана
 
-«Прочитай экран» читает вслух весь текст текущего экрана: сообщения, письма, любое приложение. Пока идёт чтение, края экрана светятся. Кнопка громкости останавливает.
+«Прочитай экран» читает вслух весь текст текущего экрана: сообщения, письма, любое приложение. Пока идёт чтение, края экрана светятся. Остановить: коснуться экрана, кнопка громкости или «отбой».
 **«Отбой» во время чтения или звонка** останавливает чтение и сбрасывает звонок (в том числе пока номер ещё набирается).
 Работает и без открытия помощника: «Алёша, прочитай экран». Включается в настройке, пункт 9 (Специальные возможности).
 
@@ -100,6 +101,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 - **Say "Alyosha"** or **"Alex"** → "Yes, I'm listening", even with the screen off.
 - **Tap the circle five times quickly** → rest for an hour.
 - Every command is confirmed with a sound and a vibration.
+- The assistant reacts only to its own language and to clearly spoken words, so videos, TV and other speech don't wake it.
 
 ### Commands (English mode)
 
@@ -122,7 +124,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 ### Screen reading
 
-"Read the screen" reads all text on the current screen aloud: messages, emails, any app. The screen edges glow while it reads; a volume button stops it.
+"Read the screen" reads all text on the current screen aloud: messages, emails, any app. The screen edges glow while it reads. To stop: tap the screen, press a volume button or say "rest".
 **Saying "rest" during reading or a call** stops reading and hangs up the call (including while it's still dialing).
 It also works without opening the assistant: "Alyosha, read the screen". Turn it on in setup, step 9 (Accessibility).
 
@@ -181,6 +183,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 - **说「阿廖沙」**或**「小助手」** → 「在，我在听」，熄屏时也可以。
 - **快速点击圆圈五次** → 休息一小时。
 - 每条命令都有声音和振动确认。
+- 助手只响应所选语言中清晰说出的词，视频、电视和他人说话不会唤醒它。
 
 ### 命令（中文模式）
 
@@ -203,7 +206,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 
 ### 读屏
 
-「读屏幕」会朗读当前屏幕上的全部文字：消息、邮件或任何应用。朗读时屏幕边缘发光，按音量键停止。
+「读屏幕」会朗读当前屏幕上的全部文字：消息、邮件或任何应用。朗读时屏幕边缘发光。停止：点击屏幕、按音量键或说「休息」。
 **朗读或通话时说「休息」**会停止朗读并挂断电话（包括正在拨号时）。
 不打开助手也可以：说「阿廖沙，读屏幕」。在设置第 9 项（无障碍）中开启。
 

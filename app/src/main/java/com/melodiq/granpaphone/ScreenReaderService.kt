@@ -183,13 +183,20 @@ class ScreenReaderService : AccessibilityService() {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             type,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            // Касаемая рамка: любое касание экрана останавливает чтение.
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
         val v = GlowView(this)
+        v.setOnTouchListener { _, e ->
+            if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                stopReading()
+                App.instance.speaker.stop()
+            }
+            true
+        }
         try {
             wm.addView(v, lp)
             glow = v

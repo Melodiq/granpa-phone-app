@@ -17,18 +17,31 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:textColor="#FFF4DC"
-        android:textSize="72sp" />
+        android:textSize="80sp" />
 
     <TextClock
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif"
-        android:format12Hour="EEEE, d MMMM"
-        android:format24Hour="EEEE, d MMMM"
+        android:fontFamily="sans-serif-black"
+        android:format12Hour="EEEE"
+        android:format24Hour="EEEE"
         android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
         android:textColor="#FFF4DC"
-        android:textSize="26sp"
-        android:textStyle="bold" />
+        android:textSize="32sp" />
+
+    <TextClock
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-black"
+        android:format12Hour="d MMMM"
+        android:format24Hour="d MMMM"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="#FFB627"
+        android:textSize="32sp" />
 
     <FrameLayout
         android:layout_width="match_parent"

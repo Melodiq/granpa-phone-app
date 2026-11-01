@@ -134,6 +134,8 @@ class Ears(private val ctx: Context) {
         grammar: List<String>?,
         timeoutMs: Int,
         partial: ((String) -> Boolean)? = null,
+        /** Строгий отбор: результат принимается, только если фильтр согласен (уверенность, нет посторонней речи). */
+        accept: ((Hyp) -> Boolean)? = null,
         cb: (String?) -> Unit
     ) {
         val m = model
@@ -158,6 +160,7 @@ class Ears(private val ctx: Context) {
             } else {
                 Recognizer(m, 16000f)
             }
+            if (accept != null) rec.setWords(true)
             recognizer = rec
             val listener = object : RecognitionListener {
                 override fun onPartialResult(hypothesis: String?) {
@@ -169,11 +172,21 @@ class Ears(private val ctx: Context) {
                 }
 
                 override fun onResult(hypothesis: String?) {
+                    if (accept != null) {
+                        val h = hypOf(hypothesis)
+                        if (h.text.isNotEmpty() && accept(h)) finish(h.text)
+                        return
+                    }
                     val t = textOf(hypothesis)
                     if (t.isNotEmpty()) finish(t)
                 }
 
                 override fun onFinalResult(hypothesis: String?) {
+                    if (accept != null) {
+                        val h = hypOf(hypothesis)
+                        finish(if (h.text.isNotEmpty() && accept(h)) h.text else null)
+                        return
+                    }
                     val t = textOf(hypothesis)
                     finish(t.ifEmpty { null })
                 }
@@ -209,6 +222,27 @@ class Ears(private val ctx: Context) {
         try { r?.close() } catch (_: Exception) {}
     }
 
+    private fun hypOf(hypothesis: String?): Hyp {
+        if (hypothesis.isNullOrBlank()) return Hyp("", emptyList())
+        return try {
+            val o = JSONObject(hypothesis)
+            val text = o.optString("text").replace("[unk]", " ").replace(Regex("\\s+"), " ").trim()
+            val arr = o.optJSONArray("result")
+            val words = ArrayList<Pair<String, Double>>()
+            if (arr != null) {
+                for (i in 0 until arr.length()) {
+                    val w = arr.optJSONObject(i) ?: continue
+                    words.add(w.optString("word") to w.optDouble("conf", 0.0))
+                }
+            } else if (text.isNotEmpty()) {
+                text.split(' ').forEach { words.add(it to 1.0) }
+            }
+            Hyp(text, words)
+        } catch (e: Exception) {
+            Hyp("", emptyList())
+        }
+    }
+
     private fun textOf(hypothesis: String?): String {
         if (hypothesis.isNullOrBlank()) return ""
         return try {
@@ -216,5 +250,25 @@ class Ears(private val ctx: Context) {
         } catch (e: Exception) {
             ""
         }
+    }
+}
+
+/** Результат распознавания со словами и уверенностью по каждому слову. */
+data class Hyp(val text: String, val words: List<Pair<String, Double>>) {
+    /** Сколько кусков речи модель не узнала (чужая речь, видео, другой язык). */
+    val unknown: Int get() = words.count { it.first == "[unk]" }
+
+    /**
+     * Уверенно ли сказано: мало посторонней речи, фраза короткая,
+     * и нужное слово распознано с уверенностью не ниже minConf.
+     */
+    fun confident(test: (String) -> Boolean, minConf: Double, maxUnknown: Int, maxWords: Int): Boolean {
+        if (unknown > maxUnknown || words.size > maxWords) return false
+        val hit = words.filter { it.first != "[unk]" && test(it.first) }.maxOfOrNull { it.second }
+        if (hit != null) return hit >= minConf
+        // Для языков, где слово режется на части (китайский), проверяем всю фразу и среднюю уверенность.
+        if (!test(text)) return false
+        val known = words.filter { it.first != "[unk]" }
+        return known.isNotEmpty() && known.sumOf { it.second } / known.size >= minConf
     }
 }

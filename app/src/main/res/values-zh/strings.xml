@@ -64,7 +64,7 @@
     <string name="notif_sleep">阿廖沙正在休息。请说「阿廖沙」</string>
     <string name="weather_check">查看天气</string>
     <string name="reader_label">阿廖沙：读屏</string>
-    <string name="reader_description">说「读屏幕」时朗读屏幕上的全部文字。朗读时屏幕边缘发光，按音量键停止。</string>
+    <string name="reader_description">说「读屏幕」时朗读屏幕上的全部文字。朗读时屏幕边缘发光。停止：点击屏幕、按音量键或说「休息」。</string>
     <string name="step_reader">9. 读屏：无障碍 → 「阿廖沙：读屏」→ 开启</string>
     <string name="reader_note">说「读屏幕」（助手隐藏时说「阿廖沙，读屏幕」）即可朗读屏幕上的全部内容。如果开关是灰色的：设置 → 应用 → 本助手 → ⋮ →「允许受限制的设置」，然后回到这里。</string>
     <string name="reader_test">测试读屏（3 秒后）</string>

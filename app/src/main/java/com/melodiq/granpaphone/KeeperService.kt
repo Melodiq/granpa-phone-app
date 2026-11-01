@@ -66,24 +66,12 @@ class KeeperService : Service() {
                 } else null
                 if (grammar != null && grammar.isEmpty()) { setWakeListening(false); return@whenReady }
                 setWakeListening(true)
-                // Реагируем уже на промежуточный результат: «прочитай экран» — сразу,
-                // «Алёша» — чуть погодя, вдруг дальше скажут «…прочитай экран».
-                val partial = { t: String ->
-                    when {
-                        phr.isReadScreen(t) -> true
-                        phr.isWake(t) -> {
-                            if (!pendingWakePosted) {
-                                pendingWakePosted = true
-                                handler.postDelayed(pendingWake, 900)
-                            }
-                            false
-                        }
-                        else -> false
-                    }
+                // Строгий отбор: слово должно прозвучать уверенно и без потока посторонней речи —
+                // тогда не срабатывает от видео, телевизора и другого языка.
+                val accept = { h: Hyp ->
+                    h.confident({ phr.isWake(it) || phr.isReadScreen(it) }, 0.75, 1, 6)
                 }
-                ears.listen(grammar, 10 * 60_000, partial = partial) { text ->
-                    handler.removeCallbacks(pendingWake)
-                    pendingWakePosted = false
+                ears.listen(grammar, 10 * 60_000, accept = accept) { text ->
                     if (!shouldWakeListen()) { setWakeListening(false); return@listen }
                     when {
                         text != null && phr.isReadScreen(text) -> readScreenByVoice()
@@ -115,7 +103,9 @@ class KeeperService : Service() {
                 stopListening = true
                 setWakeListening(true) // тот же wakelock: процессор не должен уснуть
                 wakeListening = false
-                ears.listen(grammar, 10 * 60_000, partial = { t -> phr.isStop(t) }) { text ->
+                // Во время чтения микрофон слышит и сам текст — поэтому только уверенное короткое «отбой».
+                val accept = { h: Hyp -> h.confident({ phr.isStop(it) }, 0.85, 2, 5) }
+                ears.listen(grammar, 10 * 60_000, accept = accept) { text ->
                     stopListening = false
                     if (text != null && phr.isStop(text)) stopEverything()
                     else if (busy()) handler.postDelayed(this, 150)
@@ -150,12 +140,6 @@ class KeeperService : Service() {
             setWakeListening(false)
             startWakeLoop(800)
         }
-    }
-
-    private var pendingWakePosted = false
-    private val pendingWake = Runnable {
-        pendingWakePosted = false
-        if (wakeListening) wakeByVoice()
     }
 
     /** «Прочитай экран» без открытия помощника: читаем то, что сейчас на экране. */

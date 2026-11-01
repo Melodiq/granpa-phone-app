@@ -25,6 +25,7 @@ class MainActivity : Activity() {
     private lateinit var root: LinearLayout
     private lateinit var clock: TextView
     private lateinit var day: TextView
+    private lateinit var date: TextView
     private lateinit var lamp: LampView
     private lateinit var status: TextView
     private lateinit var hint: TextView
@@ -82,17 +83,29 @@ class MainActivity : Activity() {
 
         clock = TextView(this).apply {
             typeface = black
-            textSize = 96f
+            textSize = 108f
             setTextColor(Palette.MILK)
             gravity = Gravity.CENTER
             includeFontPadding = false
-            letterSpacing = -0.02f
+            letterSpacing = -0.03f
+            maxLines = 1
         }
+        // День недели и число — отдельными крупными строками.
         day = TextView(this).apply {
-            typeface = Typeface.create("sans-serif", Typeface.BOLD)
-            textSize = 30f
+            typeface = black
+            textSize = 40f
             setTextColor(Palette.MILK)
             gravity = Gravity.CENTER
+            includeFontPadding = false
+            maxLines = 1
+        }
+        date = TextView(this).apply {
+            typeface = black
+            textSize = 40f
+            setTextColor(Palette.AMBER)
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+            maxLines = 1
         }
         lamp = LampView(this).apply {
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -118,7 +131,8 @@ class MainActivity : Activity() {
             setBackgroundColor(Palette.NIGHT)
             setPadding((24 * dp).toInt(), (28 * dp).toInt(), (24 * dp).toInt(), (32 * dp).toInt())
             addView(clock, LinearLayout.LayoutParams(-1, -2))
-            addView(day, LinearLayout.LayoutParams(-1, -2))
+            addView(day, LinearLayout.LayoutParams(-1, -2).apply { topMargin = (6 * dp).toInt() })
+            addView(date, LinearLayout.LayoutParams(-1, -2).apply { topMargin = (2 * dp).toInt() })
             addView(lamp, LinearLayout.LayoutParams(-1, 0, 1f).apply {
                 topMargin = (12 * dp).toInt(); bottomMargin = (12 * dp).toInt()
             })
@@ -271,12 +285,13 @@ class MainActivity : Activity() {
     private fun updateClock() {
         val c = Calendar.getInstance()
         clock.text = String.format("%d:%02d", c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))
-        day.text = if (Lang.isRu(this)) {
-            val wd = Ru.weekdayName(c.get(Calendar.DAY_OF_WEEK)).replaceFirstChar { it.uppercase() }
-            wd + ", " + c.get(Calendar.DAY_OF_MONTH) + " " + Ru.monthsGen[c.get(Calendar.MONTH)]
+        if (Lang.isRu(this)) {
+            day.text = Ru.weekdayName(c.get(Calendar.DAY_OF_WEEK)).replaceFirstChar { it.uppercase() }
+            date.text = "${c.get(Calendar.DAY_OF_MONTH)} ${Ru.monthsGen[c.get(Calendar.MONTH)]}"
         } else {
-            val pattern = if (Lang.code(this) == "zh") "M月d日 EEEE" else "EEEE, d MMMM"
-            java.text.SimpleDateFormat(pattern, Lang.locale(this)).format(c.time)
+            val loc = Lang.locale(this)
+            day.text = java.text.SimpleDateFormat("EEEE", loc).format(c.time).replaceFirstChar { it.uppercase() }
+            date.text = java.text.SimpleDateFormat(if (Lang.code(this) == "zh") "M月d日" else "MMMM d", loc).format(c.time)
         }
     }
 
