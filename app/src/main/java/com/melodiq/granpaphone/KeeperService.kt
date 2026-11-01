@@ -230,20 +230,60 @@ class KeeperService : Service() {
         startWakeLoop(4000)
     }
 
-    private val announce = object : Runnable {
+    // ---------- входящий звонок: озвучить и слушать «ответить» прямо из службы ----------
+    // Стандартная звонилка часто ложится поверх нашего экрана звонка (особенно при выключенном
+    // экране). Поэтому имя и ответ голосом ведёт служба, а наш экран — только картинка и касание.
+
+    private var ringRounds = 0
+    private var ringSession = 0
+    private var ringListening = false
+
+    private val ringLoop = object : Runnable {
         override fun run() {
             if (callState != TelephonyManager.CALL_STATE_RINGING) return
-            // Экран звонка сам говорит и слушает; озвучиваем только если его не видно.
-            if (!IncomingActivity.visible) App.instance.speaker.say(Phrases.of(this@KeeperService).ringing(ringName))
-            handler.postDelayed(this, 5000)
+            // Наш экран звонка на виду — он сам говорит и слушает.
+            if (IncomingActivity.visible) { handler.postDelayed(this, 1000); return }
+            val phr = Phrases.of(this@KeeperService)
+            val sp = App.instance.speaker
+            val ears = App.instance.ears
+            val s = ringSession
+            val phrase = if (ringRounds++ == 0) phr.incomingFirst(ringName) else phr.incomingRepeat(ringName)
+            sp.say(phrase) {
+                if (s != ringSession || callState != TelephonyManager.CALL_STATE_RINGING) return@say
+                if (IncomingActivity.visible || ears.model == null) { handler.postDelayed(this, 1000); return@say }
+                sp.beepListen()
+                val grammar = if (phr.useGrammar) phr.answerPhrases.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null } else null
+                ringListening = true
+                ears.listen(grammar, 4500) { text ->
+                    ringListening = false
+                    if (s != ringSession || callState != TelephonyManager.CALL_STATE_RINGING) return@listen
+                    when (text?.let { phr.answerOrReject(it) }) {
+                        true -> {
+                            sp.stop()
+                            sp.beepHeard()
+                            if (!Calls.answer(this@KeeperService)) sp.say(phr.answerFailed)
+                        }
+                        false -> {
+                            sp.beepHeard()
+                            sp.say(phr.rejecting)
+                            Calls.reject(this@KeeperService)
+                        }
+                        null -> handler.post(this)
+                    }
+                }
+            }
         }
+    }
+
+    /** Если звонилка перекрыла наш экран — один раз вернуть его наверх (касание = ответ). */
+    private val raiseIncoming = Runnable {
+        if (callState == TelephonyManager.CALL_STATE_RINGING && !IncomingActivity.visible) openIncoming()
     }
 
     /** Открыть экран входящего с ответом голосом. false — нельзя (нет разрешения). */
     private fun openIncoming(): Boolean {
         val canOpen = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
         if (!canOpen) return false
-        Calls.quietRinger(this)
         return try {
             startActivity(
                 Intent(this, IncomingActivity::class.java)
@@ -252,13 +292,18 @@ class KeeperService : Service() {
             )
             true
         } catch (_: Exception) {
-            Calls.restoreRinger(this)
             false
         }
     }
 
     private fun stopRinging() {
-        handler.removeCallbacks(announce)
+        ringSession++
+        handler.removeCallbacks(ringLoop)
+        handler.removeCallbacks(raiseIncoming)
+        if (ringListening) {
+            ringListening = false
+            if (!App.activityVisible) App.instance.ears.stop()
+        }
         IncomingActivity.close()
         Calls.restoreRinger(this)
     }
@@ -400,10 +445,14 @@ class KeeperService : Service() {
                         stopWakeLoop()
                         ringName = Contacts.nameFor(this@KeeperService, phoneNumber)
                         if (was != TelephonyManager.CALL_STATE_RINGING) {
-                            handler.removeCallbacks(announce)
-                            val opened = openIncoming()
-                            // Если экран звонка не открылся или его перекрыли — озвучиваем сами.
-                            handler.postDelayed(announce, if (opened) 3000 else 1200)
+                            ringSession++
+                            ringRounds = 0
+                            handler.removeCallbacks(ringLoop)
+                            // Мелодия тише, чтобы микрофон слышал «ответить».
+                            Calls.quietRinger(this@KeeperService)
+                            openIncoming()
+                            handler.postDelayed(ringLoop, 1500)
+                            handler.postDelayed(raiseIncoming, 2500)
                         } else {
                             // Номер пришёл вторым событием — обновить имя на экране звонка.
                             IncomingActivity.current?.let { openIncoming() }
