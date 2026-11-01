@@ -43,7 +43,20 @@ object PhrZh : Phrases {
         "要说命令，请点击屏幕任意位置。"
     override val loading = "请稍等，我还在加载。"
     override val asrBroken = "语音识别没有加载成功。请家人重新安装应用。"
-    override val sleepAnnounce = "我去休息了。要叫我，请说：阿廖沙。"
+    override fun sleepAnnounce(minutes: Int?) = when (minutes) {
+        null -> "我去休息了。要叫我，请说：阿廖沙。"
+        30 -> "我休息半小时。要提前叫我，请说：阿廖沙。"
+        60 -> "我休息一小时。要提前叫我，请说：阿廖沙。"
+        else -> if (minutes % 60 == 0) "我休息${minutes / 60}小时。要提前叫我，请说：阿廖沙。"
+        else "我休息${minutes}分钟。要提前叫我，请说：阿廖沙。"
+    }
+    override fun sleepMinutes(text: String): Int? {
+        val s = compact(text)
+        if (has(s, "半小时", "半个小时", "半个钟头")) return 30
+        Regex("($NUM)分钟").find(s)?.let { return cnNum(it.groupValues[1]) }
+        Regex("($NUM)个?(小时|钟头)").find(s)?.let { m -> return cnNum(m.groupValues[1])?.times(60) }
+        return null
+    }
     override val whomToCall = "给谁打电话？"
     override fun confirmCall(name: String) = "给${name}打电话吗？请说是或者不是。"
     override fun calling(name: String) = "正在给${name}打电话"

@@ -171,8 +171,8 @@ class MainActivity : Activity() {
     }
 
     /** Команда «отбой». */
-    fun goToSleep() {
-        Sleep.set(this, true)
+    fun goToSleep(minutes: Int? = null) {
+        Sleep.set(this, true, minutes)
         KeeperService.sleep(this)
         applySleepLook()
         handler.postDelayed({ moveTaskToBack(true) }, 400)

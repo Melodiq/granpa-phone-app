@@ -38,7 +38,30 @@ object PhrEn : Phrases {
         "To give a command, tap anywhere on the screen."
     override val loading = "One moment, I'm still loading."
     override val asrBroken = "Speech recognition didn't load. Ask your family to reinstall the app."
-    override val sleepAnnounce = "Resting now. To call me, say: Alyosha."
+    override fun sleepAnnounce(minutes: Int?) = when (minutes) {
+        null -> "Resting now. To call me, say: Alyosha."
+        30 -> "Resting for half an hour. To call me sooner, say: Alyosha."
+        60 -> "Resting for an hour. To call me sooner, say: Alyosha."
+        else -> if (minutes % 60 == 0) "Resting for ${minutes / 60} hours. To call me sooner, say: Alyosha."
+        else "Resting for $minutes minutes. To call me sooner, say: Alyosha."
+    }
+    override fun sleepMinutes(text: String): Int? {
+        val w = words(text)
+        if (has(w, "half")) return 30
+        for (i in w.indices) {
+            val isMin = w[i] == "minute" || w[i] == "minutes"
+            val isHour = w[i] == "hour" || w[i] == "hours"
+            if (!isMin && !isHour) continue
+            var n: Int? = null
+            for (back in 2 downTo 1) {
+                val j = i - back
+                if (j >= 0) number(w, j)?.let { if (j + it.second == i) n = it.first }
+            }
+            val v = n ?: 1
+            return if (isMin) v else v * 60
+        }
+        return null
+    }
     override val whomToCall = "Who should I call?"
     override fun confirmCall(name: String) = "Call $name? Say yes or no."
     override fun calling(name: String) = "Calling $name"
@@ -192,6 +215,8 @@ object PhrEn : Phrases {
         "what's the date", "what day is it", "what's today's date", "date", "day of the week", "what day of the week is it",
         "repeat", "say again", "help", "what can you do", "cancel", "stop", "no", "yes",
         "rest", "sleep", "go to sleep", "goodnight",
+        "rest for half an hour", "rest for thirty minutes", "rest for an hour", "rest for one hour", "rest for two hours",
+        "sleep for half an hour", "sleep for an hour",
         "call", "make a call", "phone",
         "read the screen", "read screen", "what's on the screen", "read"
     )

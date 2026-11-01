@@ -35,6 +35,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 | «повтори» | повторяет последний ответ |
 | «помощь» | перечисляет команды |
 | «отбой» | помощник сворачивается и не здоровается при включении экрана |
+| «отбой на полчаса», «отбой на час» | то же, но через 30 минут или час помощник сам возвращается |
 | «Алёша», «Алёша, привет» | зовёт помощника |
 
 ### Чтение экрана
@@ -113,6 +114,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 | "repeat" | repeats the last answer |
 | "help" | lists the commands |
 | "rest" | minimizes; no greeting on screen-on |
+| "rest for half an hour", "rest for an hour" | the same, and the assistant returns by itself after 30 or 60 minutes |
 | "Alyosha", "Alex" | wakes the assistant |
 
 ### Screen reading
@@ -191,6 +193,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 | 「重复」 | 重复上一个回答 |
 | 「帮助」 | 列出命令 |
 | 「休息」 | 最小化，亮屏时不再问候 |
+| 「休息半小时」「休息一小时」 | 同上，30 分钟或 1 小时后自动恢复 |
 | 「阿廖沙」「小助手」 | 唤醒助手 |
 
 ### 读屏

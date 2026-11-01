@@ -32,7 +32,31 @@ object PhrRu : Phrases {
         "Чтобы сказать команду, нажмите в любом месте экрана."
     override val loading = "Секунду, я ещё загружаюсь."
     override val asrBroken = "Распознавание речи не загрузилось. Попросите родных переустановить приложение."
-    override val sleepAnnounce = "Отбой. Чтобы позвать меня, скажите: Алёша."
+    override fun sleepAnnounce(minutes: Int?) = when (minutes) {
+        null -> "Отбой. Чтобы позвать меня, скажите: Алёша."
+        30 -> "Отбой на полчаса. Позвать раньше: скажите Алёша."
+        60 -> "Отбой на час. Позвать раньше: скажите Алёша."
+        else -> if (minutes % 60 == 0) "Отбой на ${Ru.num(minutes / 60)} ${Ru.plural(minutes / 60, "час", "часа", "часов")}. Позвать раньше: скажите Алёша."
+        else "Отбой на ${Ru.num(minutes, true)} ${Ru.plural(minutes, "минуту", "минуты", "минут")}. Позвать раньше: скажите Алёша."
+    }
+    override fun sleepMinutes(text: String): Int? {
+        val w = words(text)
+        if (has(w, "полчаса", "полчасика")) return 30
+        for (i in w.indices) {
+            val isMin = w[i].startsWith("минут")
+            val isHour = w[i] == "час" || w[i] == "часа" || w[i] == "часов" || w[i] == "часик"
+            if (!isMin && !isHour) continue
+            // число перед словом: «тридцать минут», «два часа»
+            var n: Int? = null
+            for (back in 2 downTo 1) {
+                val j = i - back
+                if (j >= 0) RuDate.number(w, j)?.let { if (j + it.second == i) n = it.first }
+            }
+            val v = n ?: 1
+            return if (isMin) v else v * 60
+        }
+        return null
+    }
     override val whomToCall = "Кому позвонить?"
     override fun confirmCall(name: String) = "Позвонить: $name? Скажите да или нет."
     override fun calling(name: String) = "Звоню: $name"
@@ -206,6 +230,8 @@ object PhrRu : Phrases {
         "какое сегодня", "какое число сегодня", "какой сегодня день и число", "скажи число", "скажи день недели",
         "повтори", "еще раз", "помощь", "что ты умеешь", "отмена", "стоп", "нет", "да",
         "отбой", "спать", "отдыхай", "отдохни", "иди спать",
+        "отбой на полчаса", "отбой на тридцать минут", "отбой на час", "отбой на два часа",
+        "отдыхай полчаса", "отдыхай час", "отдохни полчаса", "отдохни час", "отдыхай тридцать минут",
         "позвонить", "позвони", "набери", "звонок",
         "прочитай экран", "что на экране", "прочитай", "читай экран"
     )

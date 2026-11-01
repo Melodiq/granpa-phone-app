@@ -143,7 +143,10 @@ class Assistant(private val act: MainActivity) {
     private fun handle(text: String, attempt: Int) {
         val p = phr
         when (p.command(text)) {
-            Cmd.SLEEP -> say(p.sleepAnnounce) { act.goToSleep() }
+            Cmd.SLEEP -> {
+                val minutes = p.sleepMinutes(text)
+                say(p.sleepAnnounce(minutes)) { act.goToSleep(minutes) }
+            }
             Cmd.CANCEL -> say(p.ok)
             Cmd.REPEAT -> say(lastAnswer ?: p.nothingToRepeat)
             Cmd.HELP -> answer(p.help)

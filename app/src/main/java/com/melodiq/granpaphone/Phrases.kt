@@ -38,7 +38,9 @@ interface Phrases {
     val help: String
     val loading: String
     val asrBroken: String
-    val sleepAnnounce: String
+    fun sleepAnnounce(minutes: Int?): String
+    /** «отбой на 30 минут / на час» → минуты; просто «отбой» → null. */
+    fun sleepMinutes(text: String): Int?
     val whomToCall: String
     fun confirmCall(name: String): String
     fun calling(name: String): String
