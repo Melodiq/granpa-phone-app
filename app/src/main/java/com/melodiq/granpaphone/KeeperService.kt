@@ -45,6 +45,7 @@ class KeeperService : Service() {
     private fun shouldWakeListen(): Boolean =
         callState == TelephonyManager.CALL_STATE_IDLE &&
             !IncomingActivity.visible &&
+            !ScreenReaderService.isReading &&
             (!App.activityVisible || Sleep.isOn(this)) &&
             (Sleep.isOn(this) || Sleep.alwaysListen(this)) &&
             Setup.granted(this, android.Manifest.permission.RECORD_AUDIO)
@@ -60,18 +61,58 @@ class KeeperService : Service() {
                 if (!shouldWakeListen()) { setWakeListening(false); return@whenReady }
                 val phr = Phrases.of(this@KeeperService)
                 // Для китайского слушаем свободно: «阿廖沙» может не быть в словаре модели.
-                val grammar = if (phr.useGrammar) phr.wakePhrases.mapNotNull { ears.fixPhrase(it) } else null
+                val grammar = if (phr.useGrammar) {
+                    (phr.wakePhrases + phr.readPhrases).mapNotNull { ears.fixPhrase(it) }
+                } else null
                 if (grammar != null && grammar.isEmpty()) { setWakeListening(false); return@whenReady }
                 setWakeListening(true)
-                // Реагируем уже на промежуточный результат: быстрее и надёжнее, чем ждать паузы.
-                val isWake = { t: String -> phr.isWake(t) }
-                ears.listen(grammar, 10 * 60_000, partial = isWake) { text ->
+                // Реагируем уже на промежуточный результат: «прочитай экран» — сразу,
+                // «Алёша» — чуть погодя, вдруг дальше скажут «…прочитай экран».
+                val partial = { t: String ->
+                    when {
+                        phr.isReadScreen(t) -> true
+                        phr.isWake(t) -> {
+                            if (!pendingWakePosted) {
+                                pendingWakePosted = true
+                                handler.postDelayed(pendingWake, 900)
+                            }
+                            false
+                        }
+                        else -> false
+                    }
+                }
+                ears.listen(grammar, 10 * 60_000, partial = partial) { text ->
+                    handler.removeCallbacks(pendingWake)
+                    pendingWakePosted = false
                     if (!shouldWakeListen()) { setWakeListening(false); return@listen }
-                    val heard = text != null && phr.isWake(text)
-                    if (heard) wakeByVoice() else handler.postDelayed(this, 150)
+                    when {
+                        text != null && phr.isReadScreen(text) -> readScreenByVoice()
+                        text != null && phr.isWake(text) -> wakeByVoice()
+                        else -> handler.postDelayed(this, 150)
+                    }
                 }
             }
         }
+    }
+
+    private var pendingWakePosted = false
+    private val pendingWake = Runnable {
+        pendingWakePosted = false
+        if (wakeListening) wakeByVoice()
+    }
+
+    /** «Прочитай экран» без открытия помощника: читаем то, что сейчас на экране. */
+    private fun readScreenByVoice() {
+        App.instance.speaker.beepHeard()
+        if (!ScreenReaderService.read()) {
+            App.instance.speaker.say(Phrases.of(this).readerDisabled)
+        }
+        // Слушать дальше, когда чтение закончится (чтобы не услышать самих себя).
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                if (App.instance.speaker.isSpeaking) handler.postDelayed(this, 1000) else startWakeLoop(300)
+            }
+        }, 1500)
     }
 
     /** Пока слушаем «Алёша», процессор не должен засыпать вместе с экраном. */

@@ -30,11 +30,17 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 | «погода на завтра», «погода послезавтра» | прогноз на день: температура, осадки, сильный ветер |
 | «запиши» | «Что записать?» → «Когда?» → «Записываю… Верно?» |
 | «что у меня сегодня», «что у меня завтра», «мои записи» | читает записи |
+| «прочитай экран», «что на экране» | читает вслух весь текст на экране, края экрана светятся |
 | «удали запись» | по очереди предлагает записи на удаление |
 | «повтори» | повторяет последний ответ |
 | «помощь» | перечисляет команды |
 | «отбой» | помощник сворачивается и не здоровается при включении экрана |
 | «Алёша», «Алёша, привет» | зовёт помощника |
+
+### Чтение экрана
+
+«Прочитай экран» читает вслух весь текст текущего экрана: сообщения, письма, любое приложение. Пока идёт чтение, края экрана светятся. Кнопка громкости останавливает.
+Работает и без открытия помощника: «Алёша, прочитай экран». Включается в настройке, пункт 9 (Специальные возможности).
 
 ### Входящие звонки
 
@@ -78,7 +84,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 - Подписывайте контакты коротко: «Дочь», «Сын Андрей». В настройке видно, какие распознаются.
 - Отключите блокировку экрана.
 - «Алёша» постоянно слушается и расходует батарею. Можно оставить только «в отбое».
-- Погода берётся из Open-Meteo, нужны интернет и геолокация.
+- Погода: Open-Meteo, при сбое — MET Norway. Нужны интернет и геолокация.
 
 ---
 
@@ -102,11 +108,17 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 | "weather tomorrow", "weather the day after tomorrow" | the day's forecast: temperature range, precipitation, strong wind |
 | "take a note" | "What should I write down?" → "When?" → "Is that right?" |
 | "what do I have today", "what do I have tomorrow", "my notes" | reads your notes |
+| "read the screen", "what's on the screen" | reads all on-screen text aloud while the screen edges glow |
 | "delete a note" | offers notes one by one for deletion |
 | "repeat" | repeats the last answer |
 | "help" | lists the commands |
 | "rest" | minimizes; no greeting on screen-on |
 | "Alyosha", "Alex" | wakes the assistant |
+
+### Screen reading
+
+"Read the screen" reads all text on the current screen aloud: messages, emails, any app. The screen edges glow while it reads; a volume button stops it.
+It also works without opening the assistant: "Alyosha, read the screen". Turn it on in setup, step 9 (Accessibility).
 
 ### Incoming calls
 
@@ -150,7 +162,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 - Keep contact names short. Setup shows which ones are recognized.
 - Turn off the screen lock.
 - Always listening for the wake word uses battery; you can limit it to rest mode.
-- Weather comes from Open-Meteo and needs internet and location.
+- Weather comes from Open-Meteo, with MET Norway as a fallback; it needs internet and location.
 
 ---
 
@@ -174,11 +186,17 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 | 「明天天气」「后天天气」 | 当天预报：气温范围、降水、大风 |
 | 「记一下」 | 「要记什么？」→「什么时候？」→「对吗？」 |
 | 「今天有什么安排」「明天有什么安排」「我的记录」 | 朗读记录 |
+| 「读屏幕」「屏幕上有什么」 | 朗读屏幕上的全部文字，屏幕边缘发光 |
 | 「删除记录」 | 逐条询问是否删除 |
 | 「重复」 | 重复上一个回答 |
 | 「帮助」 | 列出命令 |
 | 「休息」 | 最小化，亮屏时不再问候 |
 | 「阿廖沙」「小助手」 | 唤醒助手 |
+
+### 读屏
+
+「读屏幕」会朗读当前屏幕上的全部文字：消息、邮件或任何应用。朗读时屏幕边缘发光，按音量键停止。
+不打开助手也可以：说「阿廖沙，读屏幕」。在设置第 9 项（无障碍）中开启。
 
 ### 来电
 
@@ -222,10 +240,10 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 - 联系人名称越短越好。设置中可以看到哪些能被识别。
 - 关闭锁屏。
 - 始终监听唤醒词会耗电，可以改为仅在休息时监听。
-- 天气来自 Open-Meteo，需要网络和定位。
+- 天气来自 Open-Meteo，失败时使用 MET Norway，需要网络和定位。
 
 ---
 
 ## Tech
 
-Kotlin with plain Android views, no UI framework. Offline speech recognition uses [Vosk](https://alphacephei.com/vosk/) with small Russian, English and Chinese models; Russian and English listen against a restricted grammar of commands and contact names for accuracy, Chinese uses free recognition with substring matching. Speech output uses the system text-to-speech engine. Weather comes from [Open-Meteo](https://open-meteo.com/). GitHub Actions builds the APK on every push to `main` and publishes it to Releases.
+Kotlin with plain Android views, no UI framework. Offline speech recognition uses [Vosk](https://alphacephei.com/vosk/) with small Russian, English and Chinese models; Russian and English listen against a restricted grammar of commands and contact names for accuracy, Chinese uses free recognition with substring matching. Speech output uses the system text-to-speech engine. Screen reading is an accessibility service that collects text from the active window and speaks it with a glowing edge overlay. Weather comes from [Open-Meteo](https://open-meteo.com/) with [MET Norway](https://api.met.no/) as a fallback. GitHub Actions builds the APK on every push to `main` and publishes it to Releases.

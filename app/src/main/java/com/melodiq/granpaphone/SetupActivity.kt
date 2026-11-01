@@ -125,6 +125,16 @@ class SetupActivity : Activity() {
             note(getString(if (wakeOk) R.string.wake_known else R.string.wake_unknown))
         }
 
+        item(getString(R.string.step_reader), ScreenReaderService.isOn) {
+            open(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+        note(getString(R.string.reader_note))
+        if (ScreenReaderService.isOn) {
+            button(getString(R.string.reader_test)) {
+                android.os.Handler(mainLooper).postDelayed({ ScreenReaderService.read() }, 3000)
+            }
+        }
+
         if (isXiaomi()) xiaomiSection()
 
         button(getString(R.string.step_autostart)) {

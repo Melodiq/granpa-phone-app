@@ -157,6 +157,15 @@ class Assistant(private val act: MainActivity) {
             Cmd.WEATHER_AFTER -> weather(2)
             Cmd.DATE -> answer(p.dateText(Calendar.getInstance()))
             Cmd.TIME -> answer(p.timeText(Calendar.getInstance()))
+            Cmd.READ_SCREEN -> {
+                if (!ScreenReaderService.isOn) {
+                    say(p.readerDisabled)
+                } else {
+                    // Помощник уходит в сторону, и читается то, что под ним.
+                    act.setState(LampState.IDLE)
+                    act.readScreenBehind()
+                }
+            }
             Cmd.CALL_VERB, Cmd.NONE -> {
                 val cands = Contacts.match(people, text, p)
                 when {

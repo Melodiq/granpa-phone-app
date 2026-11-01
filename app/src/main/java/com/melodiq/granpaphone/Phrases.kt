@@ -7,7 +7,7 @@ import java.util.Locale
 /** Что пользователь попросил. */
 enum class Cmd {
     SLEEP, CANCEL, REPEAT, HELP, DELETE, NOTE, LIST_ALL, LIST_TODAY, LIST_TOMORROW,
-    WEATHER_NOW, WEATHER_TOMORROW, WEATHER_AFTER, DATE, TIME, CALL_VERB, NONE
+    WEATHER_NOW, WEATHER_TOMORROW, WEATHER_AFTER, DATE, TIME, CALL_VERB, READ_SCREEN, NONE
 }
 
 /**
@@ -82,6 +82,15 @@ interface Phrases {
     val unknownNumber: String
     val strangerNumber: String
     fun ringing(name: String): String
+
+    // ---------- чтение экрана ----------
+    val readingScreen: String
+    val nothingOnScreen: String
+    val readerDisabled: String
+    val readerDone: String
+    /** Фразы «прочитай экран» для списка распознавания (вместе со словом пробуждения). */
+    val readPhrases: List<String>
+    fun isReadScreen(text: String): Boolean
 
     val voiceSample: String
     fun voiceTest(c: Calendar): String

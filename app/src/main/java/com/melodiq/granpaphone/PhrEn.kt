@@ -32,6 +32,7 @@ object PhrEn : Phrases {
         "Tell the time: say time. Tell the date: say what's the date. " +
         "Tell the weather: say weather, weather tomorrow, or weather the day after tomorrow. " +
         "Take a note: say take a note. Read your plans: say what do I have today, or what do I have tomorrow. " +
+        "Read everything on the screen: say read the screen. " +
         "Delete a note: say delete a note. Repeat the last answer: say repeat. " +
         "To let me rest, say: rest. To call me again, say: Alyosha. " +
         "To give a command, tap anywhere on the screen."
@@ -71,6 +72,7 @@ object PhrEn : Phrases {
         63 -> "rain"
         65 -> "heavy rain"
         66, 67 -> "freezing rain, icy roads"
+        68, 69 -> "sleet"
         71 -> "light snow"
         73 -> "snow"
         75 -> "heavy snow"
@@ -162,6 +164,19 @@ object PhrEn : Phrases {
     override val strangerNumber = "an unfamiliar number"
     override fun ringing(name: String) = "$name is calling"
 
+    override val readingScreen = "Reading the screen."
+    override val nothingOnScreen = "There's no text on the screen."
+    override val readerDisabled = "Screen reading is turned off. Ask your family to turn it on in the assistant's setup."
+    override val readerDone = "Done."
+    override val readPhrases = listOf(
+        "read the screen", "read screen", "read it", "read", "what's on the screen", "read the text", "read the message",
+        "alyosha read the screen", "alex read the screen", "alyosha read", "alex read"
+    )
+    override fun isReadScreen(text: String): Boolean {
+        val w = words(text)
+        return has(w, "read") || (has(w, "screen") && has(w, "what's", "what"))
+    }
+
     override val voiceSample = "Hello. I'm Alyosha, your assistant. This is how my voice sounds."
     override fun voiceTest(c: Calendar) = "Voice test. " + timeText(c)
 
@@ -177,7 +192,8 @@ object PhrEn : Phrases {
         "what's the date", "what day is it", "what's today's date", "date", "day of the week", "what day of the week is it",
         "repeat", "say again", "help", "what can you do", "cancel", "stop", "no", "yes",
         "rest", "sleep", "go to sleep", "goodnight",
-        "call", "make a call", "phone"
+        "call", "make a call", "phone",
+        "read the screen", "read screen", "what's on the screen", "read"
     )
     override val callVerbs = listOf("call", "phone", "dial", "ring")
 
@@ -220,6 +236,7 @@ object PhrEn : Phrases {
         val weather = has(w, "weather", "outside")
         val afterTomorrow = hasSeq(w, "after", "tomorrow")
         return when {
+            isReadScreen(text) -> Cmd.READ_SCREEN
             has(w, "rest", "sleep", "goodnight") -> Cmd.SLEEP
             has(w, "cancel", "stop") -> Cmd.CANCEL
             has(w, "repeat", "again") -> Cmd.REPEAT

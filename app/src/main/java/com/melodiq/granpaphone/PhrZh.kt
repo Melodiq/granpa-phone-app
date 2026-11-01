@@ -37,6 +37,7 @@ object PhrZh : Phrases {
         "报时：说几点了。报日期：说今天几号。" +
         "报天气：说天气、明天天气或者后天天气。" +
         "记事：说记一下。读安排：说今天有什么安排，或者明天有什么安排。" +
+        "朗读屏幕上的内容：说读屏幕。" +
         "删除记录：说删除记录。重复上一个回答：说重复。" +
         "让我休息：说休息。再叫我：说阿廖沙。" +
         "要说命令，请点击屏幕任意位置。"
@@ -77,6 +78,7 @@ object PhrZh : Phrases {
         63 -> "中雨"
         65 -> "大雨"
         66, 67 -> "冻雨，路面结冰"
+        68, 69 -> "雨夹雪"
         71 -> "小雪"
         73 -> "中雪"
         75 -> "大雪"
@@ -167,6 +169,13 @@ object PhrZh : Phrases {
     override val strangerNumber = "陌生号码"
     override fun ringing(name: String) = "${name}来电"
 
+    override val readingScreen = "正在读屏幕。"
+    override val nothingOnScreen = "屏幕上没有文字。"
+    override val readerDisabled = "读屏功能没有开启。请家人在助手设置中开启。"
+    override val readerDone = "读完了。"
+    override val readPhrases: List<String> = emptyList()
+    override fun isReadScreen(text: String) = has(compact(text), "读屏", "读一下", "读屏幕", "念一下", "屏幕上有什么", "读给我听", "朗读")
+
     override val voiceSample = "您好，我是阿廖沙，您的助手。这是我的声音。"
     override fun voiceTest(c: Calendar) = "语音测试。" + timeText(c)
 
@@ -212,6 +221,7 @@ object PhrZh : Phrases {
         val s = compact(text)
         val weather = has(s, "天气", "气温", "温度")
         return when {
+            isReadScreen(text) -> Cmd.READ_SCREEN
             has(s, "休息", "睡觉", "晚安", "退下") -> Cmd.SLEEP
             has(s, "取消", "停止", "算了") -> Cmd.CANCEL
             has(s, "重复", "再说一遍", "再说一次") -> Cmd.REPEAT

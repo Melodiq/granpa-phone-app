@@ -164,6 +164,12 @@ class MainActivity : Activity() {
         assistant.wakeGreet()
     }
 
+    /** «Прочитай экран»: свернуться и прочитать то, что было под помощником. */
+    fun readScreenBehind() {
+        moveTaskToBack(true)
+        handler.postDelayed({ ScreenReaderService.read() }, 900)
+    }
+
     /** Команда «отбой». */
     fun goToSleep() {
         Sleep.set(this, true)
