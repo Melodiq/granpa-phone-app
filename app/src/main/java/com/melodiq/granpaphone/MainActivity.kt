@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private var longPressFired = false
     private var pendingGreet = false
     private var pendingWake = false
+    private var pendingListen = false
 
     private val longPress = Runnable {
         longPressFired = true
@@ -70,25 +71,27 @@ class MainActivity : Activity() {
         }
         pendingGreet = (savedInstanceState == null || intent.getBooleanExtra(EXTRA_GREET, false)) && !Sleep.isOn(this)
         pendingWake = intent.getBooleanExtra(EXTRA_WAKE, false)
+        pendingListen = intent.getBooleanExtra(EXTRA_LISTEN, false)
     }
 
     private fun buildUi() {
         val dp = resources.displayMetrics.density
         val condensed = Typeface.create("sans-serif-condensed", Typeface.BOLD)
         val medium = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        val black = Typeface.create("sans-serif-black", Typeface.NORMAL)
 
         clock = TextView(this).apply {
-            typeface = condensed
-            textSize = 88f
+            typeface = black
+            textSize = 96f
             setTextColor(Palette.MILK)
             gravity = Gravity.CENTER
             includeFontPadding = false
             letterSpacing = -0.02f
         }
         day = TextView(this).apply {
-            typeface = medium
-            textSize = 24f
-            setTextColor(Palette.MILK_DIM)
+            typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            textSize = 30f
+            setTextColor(Palette.MILK)
             gravity = Gravity.CENTER
         }
         lamp = LampView(this).apply {
@@ -172,7 +175,8 @@ class MainActivity : Activity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.getBooleanExtra(EXTRA_WAKE, false)) pendingWake = true
+        if (intent.getBooleanExtra(EXTRA_LISTEN, false)) pendingListen = true
+        else if (intent.getBooleanExtra(EXTRA_WAKE, false)) pendingWake = true
         else if (intent.getBooleanExtra(EXTRA_GREET, false) && !Sleep.isOn(this)) pendingGreet = true
     }
 
@@ -180,11 +184,19 @@ class MainActivity : Activity() {
         super.onResume()
         App.activityVisible = true
         KeeperService.start(this)
+        KeeperService.appVisible(this)
         handler.post(tick)
         assistant.reloadContacts()
         applySleepLook()
         if (!Setup.essentialsGranted(this)) return
         when {
+            pendingListen -> {
+                // Нажали на виджет: сразу слушаем (из отбоя — будим).
+                pendingListen = false
+                pendingGreet = false
+                pendingWake = false
+                if (Sleep.isOn(this)) wakeUp() else assistant.onTap()
+            }
             pendingWake -> {
                 pendingWake = false
                 pendingGreet = false
@@ -203,6 +215,7 @@ class MainActivity : Activity() {
         handler.removeCallbacks(tick)
         // Во сне микрофоном пользуется служба (ждёт «Алёша») — не мешаем ей.
         if (!Sleep.isOn(this)) App.instance.ears.stop()
+        KeeperService.appHidden(this)
         super.onPause()
     }
 
@@ -247,5 +260,6 @@ class MainActivity : Activity() {
     companion object {
         const val EXTRA_GREET = "greet"
         const val EXTRA_WAKE = "wake"
+        const val EXTRA_LISTEN = "listen"
     }
 }

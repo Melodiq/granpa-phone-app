@@ -139,11 +139,58 @@ class SetupActivity : Activity() {
             })
         }
 
-        Weather.lastError?.let { note("Погода, последняя ошибка: $it") }
+        weatherSection()
+
+        title("Слово «Алёша»")
+        val always = Sleep.alwaysListen(this)
+        item(
+            if (always) "Слушать «Алёша» всегда, когда помощник не на экране (нажмите, чтобы только в отбое)"
+            else "Слушать «Алёша» только в отбое (нажмите, чтобы всегда)",
+            always
+        ) {
+            Sleep.setAlwaysListen(this, !always)
+            KeeperService.start(this)
+            rebuild()
+        }
+        note("«Всегда» удобнее, но расходует батарею сильнее.")
 
         contactsReport()
 
         button("Готово — вернуться к помощнику") { finish() }
+    }
+
+    /** Погода: ключ Яндекс.Погоды и последняя ошибка. */
+    private fun weatherSection() {
+        val dp = resources.displayMetrics.density
+        title("Погода")
+        val key = Weather.yandexKey(this)
+        note(
+            if (key.isNullOrBlank()) "Сейчас погода берётся из Open-Meteo. Чтобы брать из Яндекса, вставьте ключ API Яндекс.Погоды (yandex.ru/dev/weather → личный кабинет → ключ)."
+            else "Погода берётся из Яндекса. Если Яндекс не ответит — из Open-Meteo."
+        )
+        val field = android.widget.EditText(this).apply {
+            hint = "Ключ API Яндекс.Погоды"
+            setText(key ?: "")
+            textSize = 17f
+            setTextColor(Palette.MILK)
+            setHintTextColor(Palette.MILK_DIM)
+            isSingleLine = true
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 12 * dp
+                setColor(Color.parseColor("#1C3A63"))
+            }
+            setPadding((16 * dp).toInt(), (14 * dp).toInt(), (16 * dp).toInt(), (14 * dp).toInt())
+        }
+        box.addView(field, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = (10 * dp).toInt() })
+        button("Сохранить ключ и проверить погоду") {
+            Weather.setYandexKey(this, field.text.toString())
+            App.instance.speaker.say("Проверяю погоду.")
+            Weather.get(this) { text ->
+                App.instance.speaker.say(text, flush = false)
+                rebuild()
+            }
+        }
+        Weather.lastError?.let { note("Последняя ошибка погоды: $it") }
     }
 
     /** Выбор голоса: каждый можно послушать, нажатие сразу выбирает. */

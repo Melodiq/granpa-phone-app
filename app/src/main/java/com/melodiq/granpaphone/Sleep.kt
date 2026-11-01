@@ -15,6 +15,13 @@ object Sleep {
         prefs(ctx).edit().putBoolean("on", on).apply()
     }
 
+    /** Слушать «Алёша» всегда, когда помощник не на экране (а не только в отбое). */
+    fun alwaysListen(ctx: Context): Boolean = prefs(ctx).getBoolean("always", true)
+
+    fun setAlwaysListen(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean("always", on).apply()
+    }
+
     /** Фразы-пробуждения (в е-написании; Ears сам подберёт ё, если модель пишет через ё). */
     val WAKE_PHRASES = listOf(
         "алеша", "алеша привет", "привет алеша", "алешенька", "алешка", "эй алеша", "алексей"
