@@ -105,14 +105,10 @@ class IncomingActivity : Activity() {
     override fun onResume() {
         super.onResume()
         visible = true
-        rounds = 0
-        loop()
     }
 
     override fun onPause() {
         visible = false
-        session++
-        ears.stop()
         super.onPause()
     }
 

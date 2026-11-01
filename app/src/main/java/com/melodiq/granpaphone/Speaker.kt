@@ -157,7 +157,9 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
         val list = russianVoices()
         if (list.isEmpty()) return
         val saved = prefs.getString("name_" + lang(), null) ?: if (lang() == "ru") prefs.getString("name", null) else null
-        val v = list.firstOrNull { it.name == saved } ?: guessMale(list) ?: return
+        // По умолчанию для русского — «Голос 6» из списка в настройке (выбран как самый спокойный).
+        val default6 = if (lang() == "ru") list.getOrNull(5) else null
+        val v = list.firstOrNull { it.name == saved } ?: default6 ?: guessMale(list) ?: return
         try { tts.voice = v } catch (_: Exception) {}
     }
 

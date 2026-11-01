@@ -241,8 +241,6 @@ class KeeperService : Service() {
     private val ringLoop = object : Runnable {
         override fun run() {
             if (callState != TelephonyManager.CALL_STATE_RINGING) return
-            // Наш экран звонка на виду — он сам говорит и слушает.
-            if (IncomingActivity.visible) { handler.postDelayed(this, 1000); return }
             val phr = Phrases.of(this@KeeperService)
             val sp = App.instance.speaker
             val ears = App.instance.ears
@@ -250,7 +248,7 @@ class KeeperService : Service() {
             val phrase = if (ringRounds++ == 0) phr.incomingFirst(ringName) else phr.incomingRepeat(ringName)
             sp.say(phrase) {
                 if (s != ringSession || callState != TelephonyManager.CALL_STATE_RINGING) return@say
-                if (IncomingActivity.visible || ears.model == null) { handler.postDelayed(this, 1000); return@say }
+                if (ears.model == null) { handler.postDelayed(this, 1000); return@say }
                 sp.beepListen()
                 val grammar = if (phr.useGrammar) phr.answerPhrases.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null } else null
                 ringListening = true
@@ -451,8 +449,8 @@ class KeeperService : Service() {
                             // Мелодия тише, чтобы микрофон слышал «ответить».
                             Calls.quietRinger(this@KeeperService)
                             openIncoming()
+                            // Говорит и слушает только служба: системная звонилка может закрыть наш экран.
                             handler.postDelayed(ringLoop, 1500)
-                            handler.postDelayed(raiseIncoming, 2500)
                         } else {
                             // Номер пришёл вторым событием — обновить имя на экране звонка.
                             IncomingActivity.current?.let { openIncoming() }
