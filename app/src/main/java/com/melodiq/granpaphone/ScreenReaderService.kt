@@ -56,6 +56,7 @@ class ScreenReaderService : AccessibilityService() {
         val volume = event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || event.keyCode == KeyEvent.KEYCODE_VOLUME_UP
         if (reading && volume) {
             if (event.action == KeyEvent.ACTION_DOWN) {
+                Profile.lastReadStop = "volume key"
                 stopReading()
                 App.instance.speaker.stop()
             }
@@ -96,7 +97,10 @@ class ScreenReaderService : AccessibilityService() {
             override fun run() {
                 if (gen != generation || !reading) return
                 quiet = if (App.instance.speaker.isSpeaking) 0 else quiet + 1
-                if (quiet >= 3) finish(gen) else handler.postDelayed(this, 1000)
+                if (quiet >= 3) {
+                    Profile.lastReadStop = "speech interrupted"
+                    finish(gen)
+                } else handler.postDelayed(this, 1000)
             }
         }
         handler.postDelayed(check, 2500)
@@ -190,10 +194,26 @@ class ScreenReaderService : AccessibilityService() {
             PixelFormat.TRANSLUCENT
         )
         val v = GlowView(this)
-        v.setOnTouchListener { _, e ->
-            if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
-                stopReading()
-                App.instance.speaker.stop()
+        // Останавливаем только настоящим касанием: короткий тап не у самого края экрана
+        // (держа телефон, ладонь задевает края — это не должно обрывать чтение).
+        var downX = 0f
+        var downY = 0f
+        var downAt = 0L
+        v.setOnTouchListener { view, e ->
+            when (e.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> { downX = e.rawX; downY = e.rawY; downAt = e.eventTime }
+                android.view.MotionEvent.ACTION_UP -> {
+                    val dp = resources.displayMetrics.density
+                    val edge = 36 * dp
+                    val moved = Math.hypot((e.rawX - downX).toDouble(), (e.rawY - downY).toDouble()) > 30 * dp
+                    val quick = e.eventTime - downAt < 600
+                    val nearEdge = downX < edge || downX > view.width - edge || downY < edge || downY > view.height - edge
+                    if (quick && !moved && !nearEdge) {
+                        Profile.lastReadStop = "tap"
+                        stopReading()
+                        App.instance.speaker.stop()
+                    }
+                }
             }
             true
         }

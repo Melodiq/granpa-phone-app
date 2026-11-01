@@ -98,6 +98,9 @@ interface Phrases {
     /** Фразы для списка распознавания, пока идёт чтение экрана или звонок. */
     val stopPhrases: List<String>
     fun isStop(text: String): Boolean
+    /** Во время чтения — только вместе со словом пробуждения («Алёша, стоп»): читаемый текст его почти не содержит. */
+    val readStopPhrases: List<String>
+    fun isReadStop(text: String): Boolean
 
     val voiceSample: String
     fun voiceTest(c: Calendar): String

@@ -130,6 +130,7 @@ class SetupActivity : Activity() {
             open(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
         note(getString(R.string.reader_note))
+        Profile.lastReadStop?.let { note(getString(R.string.reader_last_stop, it)) }
         if (ScreenReaderService.isOn) {
             button(getString(R.string.reader_test)) {
                 android.os.Handler(mainLooper).postDelayed({ ScreenReaderService.read() }, 3000)

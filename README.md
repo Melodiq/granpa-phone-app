@@ -42,8 +42,8 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 ### Чтение экрана
 
-«Прочитай экран» читает вслух весь текст текущего экрана: сообщения, письма, любое приложение. Пока идёт чтение, края экрана светятся. Остановить: коснуться экрана, кнопка громкости или «отбой».
-**«Отбой» во время чтения или звонка** останавливает чтение и сбрасывает звонок (в том числе пока номер ещё набирается).
+«Прочитай экран» читает вслух весь текст текущего экрана: сообщения, письма, любое приложение. Пока идёт чтение, края экрана светятся. Остановить: коснуться экрана, кнопка громкости или «Алёша, стоп».
+**«Отбой» во время звонка** сбрасывает его (в том числе пока номер ещё набирается).
 Работает и без открытия помощника: «Алёша, прочитай экран». Включается в настройке, пункт 9 (Специальные возможности).
 
 ### Входящие звонки
@@ -125,8 +125,8 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 ### Screen reading
 
-"Read the screen" reads all text on the current screen aloud: messages, emails, any app. The screen edges glow while it reads. To stop: tap the screen, press a volume button or say "rest".
-**Saying "rest" during reading or a call** stops reading and hangs up the call (including while it's still dialing).
+"Read the screen" reads all text on the current screen aloud: messages, emails, any app. The screen edges glow while it reads. To stop: tap the screen, press a volume button or say "Alyosha, stop".
+**Saying "rest" during a call** hangs it up (including while it's still dialing).
 It also works without opening the assistant: "Alyosha, read the screen". Turn it on in setup, step 9 (Accessibility).
 
 ### Incoming calls
@@ -208,8 +208,8 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 
 ### 读屏
 
-「读屏幕」会朗读当前屏幕上的全部文字：消息、邮件或任何应用。朗读时屏幕边缘发光。停止：点击屏幕、按音量键或说「休息」。
-**朗读或通话时说「休息」**会停止朗读并挂断电话（包括正在拨号时）。
+「读屏幕」会朗读当前屏幕上的全部文字：消息、邮件或任何应用。朗读时屏幕边缘发光。停止：点击屏幕、按音量键或说「阿廖沙，停」。
+**通话时说「休息」**会挂断电话（包括正在拨号时）。
 不打开助手也可以：说「阿廖沙，读屏幕」。在设置第 9 项（无障碍）中开启。
 
 ### 来电

@@ -28,4 +28,7 @@ object Profile {
 
     /** Что услышали последним (для настройки порога). */
     @Volatile var lastWake: String? = null
+
+    /** Почему последний раз остановилось чтение экрана (для диагностики). */
+    @Volatile var lastReadStop: String? = null
 }

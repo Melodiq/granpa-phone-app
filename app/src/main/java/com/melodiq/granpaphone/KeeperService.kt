@@ -107,15 +107,29 @@ class KeeperService : Service() {
             ears.whenReady {
                 if (!busy()) { stopListening = false; return@whenReady }
                 val phr = Phrases.of(this@KeeperService)
-                val grammar = if (phr.useGrammar) phr.stopPhrases.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null } else null
+                val reading = ScreenReaderService.isReading
+                // Во время чтения — только «Алёша, стоп»: микрофон слышит и сам читаемый текст.
+                // Во время звонка — простое «отбой» / «положи трубку».
+                val phrases = if (reading) phr.readStopPhrases else phr.stopPhrases
+                val isStopText = { t: String -> if (reading) phr.isReadStop(t) else phr.isStop(t) }
+                val grammar = if (phr.useGrammar) phrases.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null } else null
                 stopListening = true
                 setWakeListening(true) // тот же wakelock: процессор не должен уснуть
                 wakeListening = false
                 // Во время чтения микрофон слышит и сам текст — поэтому только уверенное короткое «отбой».
-                val accept = { h: Hyp -> h.confident({ phr.isStop(it) }, 0.85, 2, 5) }
+                val accept = { h: Hyp ->
+                    val known = h.words.filter { it.first != "[unk]" }
+                    val ok = isStopText(h.text) && h.unknown <= 2 && h.words.size <= 6 &&
+                        known.isNotEmpty() && known.minOf { it.second } >= 0.7
+                    if (reading && isStopText(h.text)) {
+                        Profile.lastReadStop = "voice: " + h.words.joinToString(" ") { "${it.first} ${"%.2f".format(it.second)}" } +
+                            if (ok) " ✓" else " ✗"
+                    }
+                    ok
+                }
                 ears.listen(grammar, 10 * 60_000, accept = accept) { text ->
                     stopListening = false
-                    if (text != null && phr.isStop(text)) stopEverything()
+                    if (text != null && isStopText(text)) stopEverything()
                     else if (busy()) handler.postDelayed(this, 150)
                     else onBusyChanged()
                 }

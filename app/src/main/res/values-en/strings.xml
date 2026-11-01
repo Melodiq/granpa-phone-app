@@ -64,7 +64,7 @@
     <string name="notif_sleep">Alyosha is resting. Say «Alyosha»</string>
     <string name="weather_check">Check the weather</string>
     <string name="reader_label">Alyosha: screen reading</string>
-    <string name="reader_description">Reads all on-screen text aloud when you say «read the screen». The screen edges glow while it reads. To stop: tap the screen, press a volume button or say «rest».</string>
+    <string name="reader_description">Reads all on-screen text aloud when you say «read the screen». The screen edges glow while it reads. To stop: tap the screen, press a volume button or say «Alyosha, stop».</string>
     <string name="step_reader">9. Screen reading: Accessibility → «Alyosha: screen reading» → turn on</string>
     <string name="reader_note">Say «read the screen» (or «Alyosha, read the screen» while the assistant is hidden) to hear everything on screen. If the switch is greyed out: Settings → Apps → the assistant → ⋮ → «Allow restricted settings», then come back here.</string>
     <string name="reader_test">Test screen reading (in 3 seconds)</string>
@@ -78,4 +78,5 @@
     <string name="sens_low">Low — only a clearly spoken «Alyosha»</string>
     <string name="sens_note">Hard to call? Go higher. Reacts to TV and videos? Go lower.</string>
     <string name="wake_last" formatted="true">Last heard (word and confidence): %1$s</string>
+    <string name="reader_last_stop" formatted="true">Last time reading stopped: %1$s</string>
 </resources>
