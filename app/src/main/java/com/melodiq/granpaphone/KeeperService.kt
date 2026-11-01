@@ -95,6 +95,63 @@ class KeeperService : Service() {
         }
     }
 
+    // ---------- «отбой» во время чтения экрана или звонка ----------
+
+    private var stopListening = false
+
+    /** Занят: читает экран или идёт звонок. Тогда слушаем только «отбой». */
+    private fun busy(): Boolean =
+        (ScreenReaderService.isReading || callState == TelephonyManager.CALL_STATE_OFFHOOK) &&
+            Setup.granted(this, android.Manifest.permission.RECORD_AUDIO)
+
+    private val stopLoop = object : Runnable {
+        override fun run() {
+            if (!busy()) { stopListening = false; return }
+            val ears = App.instance.ears
+            ears.whenReady {
+                if (!busy()) { stopListening = false; return@whenReady }
+                val phr = Phrases.of(this@KeeperService)
+                val grammar = if (phr.useGrammar) phr.stopPhrases.mapNotNull { ears.fixPhrase(it) }.ifEmpty { null } else null
+                stopListening = true
+                setWakeListening(true) // тот же wakelock: процессор не должен уснуть
+                wakeListening = false
+                ears.listen(grammar, 10 * 60_000, partial = { t -> phr.isStop(t) }) { text ->
+                    stopListening = false
+                    if (text != null && phr.isStop(text)) stopEverything()
+                    else if (busy()) handler.postDelayed(this, 150)
+                    else onBusyChanged()
+                }
+            }
+        }
+    }
+
+    /** «Отбой»: замолчать, перестать читать, сбросить звонок. */
+    private fun stopEverything() {
+        App.instance.speaker.stop()
+        ScreenReaderService.stop()
+        if (callState == TelephonyManager.CALL_STATE_OFFHOOK || callState == TelephonyManager.CALL_STATE_RINGING) {
+            Calls.reject(this)
+        }
+        App.instance.speaker.beepHeard()
+        handler.postDelayed({ onBusyChanged() }, 1500)
+    }
+
+    /** Чтение или звонок начались/закончились — переключить, что слушаем. */
+    fun onBusyChanged() {
+        handler.removeCallbacks(stopLoop)
+        if (busy()) {
+            handler.removeCallbacks(wakeLoop)
+            if (!stopListening) handler.postDelayed(stopLoop, 400)
+        } else {
+            if (stopListening) {
+                stopListening = false
+                if (!App.activityVisible) App.instance.ears.stop()
+            }
+            setWakeListening(false)
+            startWakeLoop(800)
+        }
+    }
+
     private var pendingWakePosted = false
     private val pendingWake = Runnable {
         pendingWakePosted = false
@@ -231,6 +288,7 @@ class KeeperService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         startFg()
         startWakeLoop(2500)
         Calls.restoreRinger(this) // на случай, если прошлый раз служба упала во время звонка
@@ -268,6 +326,7 @@ class KeeperService : Service() {
         stopPhone()
         handler.removeCallbacksAndMessages(null)
         setWakeListening(false)
+        if (instance === this) instance = null
         super.onDestroy()
     }
 
@@ -349,11 +408,14 @@ class KeeperService : Service() {
                         stopRinging()
                         handler.removeCallbacks(openAssistant)
                         if (was == TelephonyManager.CALL_STATE_RINGING) App.instance.speaker.stop()
+                        onBusyChanged() // во время звонка слушаем «отбой»
                     }
                     else -> {
                         stopRinging()
                         if (was != TelephonyManager.CALL_STATE_IDLE) {
                             lastCallEnd = System.currentTimeMillis()
+                            handler.removeCallbacks(stopLoop)
+                            if (stopListening) { stopListening = false; App.instance.ears.stop() }
                             startWakeLoop(3000)
                         }
                     }
@@ -376,6 +438,10 @@ class KeeperService : Service() {
     }
 
     companion object {
+        @Volatile
+        var instance: KeeperService? = null
+            private set
+
         private const val CHANNEL = "keeper"
         private const val ACTION_SLEEP = "com.melodiq.granpaphone.SLEEP"
         private const val ACTION_WAKE = "com.melodiq.granpaphone.WAKE"

@@ -37,7 +37,7 @@ object PhrZh : Phrases {
         "报时：说几点了。报日期：说今天几号。" +
         "报天气：说天气、明天天气或者后天天气。" +
         "记事：说记一下。读安排：说今天有什么安排，或者明天有什么安排。" +
-        "朗读屏幕上的内容：说读屏幕。" +
+        "朗读屏幕上的内容：说读屏幕。停止朗读或挂断电话：说休息。" +
         "删除记录：说删除记录。重复上一个回答：说重复。" +
         "让我休息：说休息。再叫我：说阿廖沙。" +
         "要说命令，请点击屏幕任意位置。"
@@ -188,6 +188,9 @@ object PhrZh : Phrases {
     override val readerDone = "读完了。"
     override val readPhrases: List<String> = emptyList()
     override fun isReadScreen(text: String) = has(compact(text), "读屏", "读一下", "读屏幕", "念一下", "屏幕上有什么", "读给我听", "朗读")
+
+    override val stopPhrases: List<String> = emptyList()
+    override fun isStop(text: String) = has(compact(text), "休息", "挂断", "挂掉", "别念了", "停止朗读", "阿廖沙停", "阿廖沙别")
 
     override val voiceSample = "您好，我是阿廖沙，您的助手。这是我的声音。"
     override fun voiceTest(c: Calendar) = "语音测试。" + timeText(c)

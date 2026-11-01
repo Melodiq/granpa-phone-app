@@ -32,7 +32,7 @@ object PhrEn : Phrases {
         "Tell the time: say time. Tell the date: say what's the date. " +
         "Tell the weather: say weather, weather tomorrow, or weather the day after tomorrow. " +
         "Take a note: say take a note. Read your plans: say what do I have today, or what do I have tomorrow. " +
-        "Read everything on the screen: say read the screen. " +
+        "Read everything on the screen: say read the screen. To stop reading or hang up a call, say: rest. " +
         "Delete a note: say delete a note. Repeat the last answer: say repeat. " +
         "To let me rest, say: rest. To call me again, say: Alyosha. " +
         "To give a command, tap anywhere on the screen."
@@ -198,6 +198,15 @@ object PhrEn : Phrases {
     override fun isReadScreen(text: String): Boolean {
         val w = words(text)
         return has(w, "read") || (has(w, "screen") && has(w, "what's", "what"))
+    }
+
+    override val stopPhrases = listOf(
+        "rest", "alyosha rest", "alyosha stop", "alex stop", "stop reading", "hang up", "end call", "end the call"
+    )
+    override fun isStop(text: String): Boolean {
+        val w = words(text)
+        return has(w, "rest", "hang") || (has(w, "end") && has(w, "call")) ||
+            (has(w, "stop") && has(w, "alyosha", "alex", "reading"))
     }
 
     override val voiceSample = "Hello. I'm Alyosha, your assistant. This is how my voice sounds."

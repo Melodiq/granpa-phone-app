@@ -94,6 +94,11 @@ interface Phrases {
     val readPhrases: List<String>
     fun isReadScreen(text: String): Boolean
 
+    // ---------- «отбой» во время чтения или звонка ----------
+    /** Фразы для списка распознавания, пока идёт чтение экрана или звонок. */
+    val stopPhrases: List<String>
+    fun isStop(text: String): Boolean
+
     val voiceSample: String
     fun voiceTest(c: Calendar): String
 

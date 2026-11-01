@@ -75,6 +75,7 @@ class ScreenReaderService : AccessibilityService() {
         val gen = ++generation
         reading = true
         showGlow()
+        KeeperService.instance?.onBusyChanged() // пока читаем — слушаем «отбой»
         val chunks = listOf(phr.readingScreen) + chunk(text)
         fun next(i: Int) {
             if (gen != generation || !reading) return
@@ -105,13 +106,15 @@ class ScreenReaderService : AccessibilityService() {
         if (gen != generation) return
         reading = false
         hideGlow()
-        KeeperService.start(this) // снова ждать «Алёша»
+        KeeperService.instance?.onBusyChanged() // снова ждать «Алёша»
     }
 
     fun stopReading() {
+        val was = reading
         generation++
         reading = false
         hideGlow()
+        if (was) KeeperService.instance?.onBusyChanged()
     }
 
     // ---------- сбор текста ----------
@@ -208,6 +211,12 @@ class ScreenReaderService : AccessibilityService() {
 
         /** Идёт чтение — микрофон в это время не слушает, чтобы не реагировать на свою же речь. */
         val isReading: Boolean get() = instance?.reading == true
+
+        /** Остановить чтение (команда «отбой»). */
+        fun stop() {
+            val s = instance ?: return
+            s.handler.post { s.stopReading() }
+        }
 
         /** Прочитать то, что сейчас на экране. false — служба не включена. */
         fun read(): Boolean {
