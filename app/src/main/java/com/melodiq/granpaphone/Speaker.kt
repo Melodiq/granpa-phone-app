@@ -12,6 +12,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
 
     private val main = Handler(Looper.getMainLooper())
+    private val prefs = ctx.getSharedPreferences("voice", Context.MODE_PRIVATE)
     private val tts = TextToSpeech(ctx, this)
     private val callbacks = ConcurrentHashMap<String, () -> Unit>()
     private val queued = mutableListOf<Triple<String, Boolean, (() -> Unit)?>>()
@@ -45,7 +47,10 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
         }
         val r = tts.setLanguage(Locale("ru", "RU"))
         languageOk = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED
-        tts.setSpeechRate(0.9f)
+        // Спокойная манера: чуть медленнее и чуть ниже обычного.
+        tts.setSpeechRate(0.85f)
+        tts.setPitch(0.9f)
+        applyVoice()
         tts.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
@@ -105,6 +110,49 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
     }
 
     val isSpeaking: Boolean get() = ready && tts.isSpeaking
+
+    // ---------- выбор голоса ----------
+
+    /** Русские голоса, которые работают без интернета и уже скачаны. */
+    fun russianVoices(): List<Voice> {
+        if (!ready) return emptyList()
+        return try {
+            tts.voices.orEmpty()
+                .filter { v ->
+                    v.locale.language == "ru" &&
+                        !v.isNetworkConnectionRequired &&
+                        !v.features.orEmpty().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
+                }
+                .sortedBy { it.name }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    val currentVoiceName: String?
+        get() = if (ready) try { tts.voice?.name } catch (e: Exception) { null } else null
+
+    fun selectVoice(name: String) {
+        val v = russianVoices().firstOrNull { it.name == name } ?: return
+        try { tts.voice = v } catch (_: Exception) {}
+        prefs.edit().putString("name", name).apply()
+    }
+
+    private fun applyVoice() {
+        val list = russianVoices()
+        if (list.isEmpty()) return
+        val saved = prefs.getString("name", null)
+        val v = list.firstOrNull { it.name == saved } ?: guessMale(list) ?: return
+        try { tts.voice = v } catch (_: Exception) {}
+    }
+
+    /** Имена голосов не говорят о поле явно; угадываем по известным мужским голосам Google. */
+    private fun guessMale(list: List<Voice>): Voice? {
+        fun n(v: Voice) = v.name.lowercase(Locale.ROOT)
+        return list.firstOrNull { n(it).contains("male") && !n(it).contains("female") }
+            ?: list.firstOrNull { n(it).contains("rud") }
+            ?: list.firstOrNull { n(it).contains("ruf") }
+    }
 
     /** Сигнал «говорите»: короткий писк и вибрация. */
     fun beepListen() {

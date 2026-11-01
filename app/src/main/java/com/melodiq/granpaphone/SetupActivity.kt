@@ -108,6 +108,7 @@ class SetupActivity : Activity() {
         ) {
             open(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA))
         }
+        voiceSection()
 
         val ears = App.instance.ears
         val earsText = when {
@@ -138,9 +139,39 @@ class SetupActivity : Activity() {
             })
         }
 
+        Weather.lastError?.let { note("Погода, последняя ошибка: $it") }
+
         contactsReport()
 
         button("Готово — вернуться к помощнику") { finish() }
+    }
+
+    /** Выбор голоса: каждый можно послушать, нажатие сразу выбирает. */
+    private fun voiceSection() {
+        val sp = App.instance.speaker
+        val voices = sp.russianVoices()
+        title("Голос помощника")
+        if (voices.isEmpty()) {
+            note("Скачанных русских голосов нет. Нажмите пункт 5 и скачайте русский голос в настройках Google.")
+            return
+        }
+        note("Нажмите на голос — он скажет фразу и станет голосом помощника. Выберите спокойный мужской. Если мужского нет: пункт 5 → Русский → скачайте ещё голоса.")
+        val current = sp.currentVoiceName
+        voices.forEachIndexed { i, v ->
+            val label = "Голос ${i + 1}" + (if (v.name == current) " — выбран" else "")
+            if (v.name == current) {
+                tile("✓  $label", Tile.DONE) { sample(v.name) }
+            } else {
+                button(label) { sample(v.name) }
+            }
+        }
+    }
+
+    private fun sample(name: String) {
+        val sp = App.instance.speaker
+        sp.selectVoice(name)
+        sp.say("Здравствуйте. Я Алёша, ваш помощник. Так звучит мой голос.")
+        rebuild()
     }
 
     private fun contactsReport() {

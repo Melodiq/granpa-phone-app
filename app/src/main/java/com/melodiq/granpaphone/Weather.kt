@@ -19,6 +19,45 @@ object Weather {
 
     private val main = Handler(Looper.getMainLooper())
 
+    /** Последняя ошибка погоды — показывается на экране настройки, чтобы понять причину. */
+    @Volatile var lastError: String? = null
+
+    private fun describeError(e: Exception): String = e.javaClass.simpleName + (e.message?.let { " — " + it.take(120) } ?: "")
+
+    private fun online(ctx: Context): Boolean {
+        val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java) ?: return true
+        return try {
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
+                val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+                caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            } else {
+                @Suppress("DEPRECATION")
+                cm.activeNetworkInfo?.isConnected == true
+            }
+        } catch (e: Exception) {
+            true
+        }
+    }
+
+    /** GET с понятной ошибкой при не-200 ответе. */
+    private fun httpGet(url: String): String {
+        val conn = URL(url).openConnection() as HttpURLConnection
+        conn.connectTimeout = 8000
+        conn.readTimeout = 8000
+        conn.setRequestProperty("User-Agent", "PomoshnikAlesha/1.0 github.com/Melodiq/granpa-phone-app")
+        conn.setRequestProperty("Accept", "application/json")
+        try {
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                val err = conn.errorStream?.bufferedReader()?.use { it.readText() }?.take(200) ?: ""
+                throw java.io.IOException("HTTP $code $err")
+            }
+            return conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
     fun get(ctx: Context, cb: (String) -> Unit) {
         locate(ctx) { loc ->
             if (loc == null) {
@@ -28,8 +67,15 @@ object Weather {
             Thread {
                 val text = try {
                     fetch(loc.first, loc.second)
-                } catch (e: Exception) {
-                    "Нет интернета, погоду узнать не могу."
+                } catch (e1: Exception) {
+                    lastError = "open-meteo: " + describeError(e1)
+                    try {
+                        fetchMetNo(loc.first, loc.second)
+                    } catch (e2: Exception) {
+                        lastError += "; met.no: " + describeError(e2)
+                        if (online(ctx)) "Сервер погоды сейчас не отвечает. Попробуйте позже."
+                        else "Нет интернета, погоду узнать не могу."
+                    }
                 }
                 main.post { cb(text) }
             }.start()
@@ -107,15 +153,7 @@ object Weather {
                 "&forecast_hours=4&timezone=auto&wind_speed_unit=ms",
             lat, lon
         )
-        val conn = URL(url).openConnection() as HttpURLConnection
-        conn.connectTimeout = 7000
-        conn.readTimeout = 7000
-        val body = try {
-            conn.inputStream.bufferedReader().use { it.readText() }
-        } finally {
-            conn.disconnect()
-        }
-        val j = JSONObject(body)
+        val j = JSONObject(httpGet(url))
         val cur = j.getJSONObject("current")
         val t0 = cur.getDouble("temperature_2m").roundToInt()
         val c0 = cur.getInt("weather_code")
@@ -146,7 +184,59 @@ object Weather {
             codes.getInt(it) == c0 && Math.abs(temps.getDouble(it).roundToInt() - t0) <= 1
         }
         if (sameAsNow) sb.append("В ближайшие два часа без изменений.") else sb.append(parts.joinToString(". ")).append(".")
+        lastError = null
         return sb.toString()
+    }
+
+    /** Запасной источник — норвежский метеоинститут (тоже бесплатно, без ключа). */
+    private fun fetchMetNo(lat: Double, lon: Double): String {
+        val url = String.format(
+            Locale.US,
+            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=%.4f&lon=%.4f", lat, lon
+        )
+        val series = JSONObject(httpGet(url)).getJSONObject("properties").getJSONArray("timeseries")
+        fun at(k: Int): Triple<Int, String, Int>? {
+            if (k >= series.length()) return null
+            val data = series.getJSONObject(k).getJSONObject("data")
+            val det = data.getJSONObject("instant").getJSONObject("details")
+            val t = det.getDouble("air_temperature").roundToInt()
+            val wind = det.optDouble("wind_speed", 0.0).roundToInt()
+            val sym = data.optJSONObject("next_1_hours")?.optJSONObject("summary")?.optString("symbol_code") ?: ""
+            return Triple(t, describeSymbol(sym), wind)
+        }
+        val now = at(0) ?: throw java.io.IOException("пустой прогноз")
+        val sb = StringBuilder("Сейчас ").append(temp(now.first)).append(", ").append(now.second)
+        if (now.third >= 1) sb.append(", ветер ").append(Ru.num(now.third)).append(" ").append(Ru.plural(now.third, "метр", "метра", "метров")).append(" в секунду")
+        sb.append(". ")
+        val labels = listOf("Через час", "Через два часа")
+        val parts = (1..2).mapNotNull { k -> at(k)?.let { labels[k - 1] + ": " + temp(it.first) + ", " + it.second } }
+        sb.append(parts.joinToString(". ")).append(".")
+        return sb.toString()
+    }
+
+    private fun describeSymbol(code: String): String {
+        val c = code.substringBefore('_')
+        return when {
+            c.isEmpty() -> "без осадков"
+            c == "clearsky" -> "ясно"
+            c == "fair" -> "преимущественно ясно"
+            c == "partlycloudy" -> "переменная облачность"
+            c == "cloudy" -> "пасмурно"
+            c == "fog" -> "туман"
+            "thunder" in c -> "гроза"
+            "sleet" in c -> if (c.startsWith("light")) "небольшой мокрый снег" else "мокрый снег"
+            "snow" in c -> when {
+                c.startsWith("light") -> "небольшой снег"
+                c.startsWith("heavy") -> "сильный снег"
+                else -> "снег"
+            }
+            "rain" in c -> when {
+                c.startsWith("light") -> if ("showers" in c) "небольшой ливень" else "небольшой дождь"
+                c.startsWith("heavy") -> if ("showers" in c) "сильный ливень" else "сильный дождь"
+                else -> if ("showers" in c) "ливень" else "дождь"
+            }
+            else -> "без осадков"
+        }
     }
 
     private fun temp(t: Int): String = when {
