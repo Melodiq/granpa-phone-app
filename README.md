@@ -194,4 +194,4 @@ Kotlin, plain Android views. Offline speech recognition: [Vosk](https://alphacep
 
 ## Лицензия
 
-[MIT](LICENSE)
+[PolyForm Noncommercial 1.0.0](LICENSE): можно использовать, изменять и распространять в некоммерческих целях. Коммерческое использование запрещено.
