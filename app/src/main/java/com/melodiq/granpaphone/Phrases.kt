@@ -107,9 +107,14 @@ interface Phrases {
     val msgVerbs: List<String>
     fun isMessage(text: String): Boolean
     val msgWhom: String
-    fun msgWhat(name: String): String
+    /** Куда писать: true — СМС, false — Макс, null — не сказано. */
+    fun msgChannel(text: String): Boolean?
+    val msgWhere: String
+    val channelPhrases: List<String>
+    fun msgWhat(name: String, sms: Boolean): String
     val msgWhatAgain: String
-    fun msgConfirm(name: String, text: String): String
+    fun msgConfirm(name: String, text: String, sms: Boolean): String
+    val smsFailed: String
     fun msgSending(name: String): String
     fun msgSent(name: String): String
     fun msgFailed(f: MaxSender.Fail): String

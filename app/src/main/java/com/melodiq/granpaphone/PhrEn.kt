@@ -225,9 +225,22 @@ object PhrEn : Phrases {
         return has(w, "message", "text", "write") && !has(w, "note")
     }
     override val msgWhom = "Who should I write to?"
-    override fun msgWhat(name: String) = "Writing to $name on Max. What should I say? Speak after the beep."
+    override fun msgChannel(text: String): Boolean? {
+        val w = words(text)
+        return when {
+            has(w, "sms", "text", "texts") -> true
+            has(w, "max") -> false
+            else -> null
+        }
+    }
+    override val msgWhere = "Where should I send it: SMS or Max?"
+    override val channelPhrases = listOf("sms", "text", "max", "on max", "in max", "a text")
+    override fun msgWhat(name: String, sms: Boolean) =
+        "Writing to $name " + (if (sms) "by SMS" else "on Max") + ". What should I say? Speak after the beep."
     override val msgWhatAgain = "I didn't catch that. What should I write?"
-    override fun msgConfirm(name: String, text: String) = "To $name: $text. Send it?"
+    override fun msgConfirm(name: String, text: String, sms: Boolean) =
+        (if (sms) "SMS to $name" else "Max message to $name") + ": $text. Send it?"
+    override val smsFailed = "I couldn't send the SMS. Ask your family to check the permissions."
     override fun msgSending(name: String) = "Sending. Please don't touch the screen for a couple of seconds."
     override fun msgSent(name: String) = "Sent to $name."
     override fun msgFailed(f: MaxSender.Fail) = when (f) {

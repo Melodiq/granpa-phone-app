@@ -70,6 +70,7 @@ object MaxSender {
             running = false
             note(if (f == null) "ГОТОВО" else "ОШИБКА: $f")
             main.post { cb(f) }
+            Unit
         }
         val launch = ctx.packageManager.getLaunchIntentForPackage(pkg)!!
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -101,9 +102,8 @@ object MaxSender {
         private val h = Handler(Looper.getMainLooper())
         private var backs = 0
 
-        fun start() = waitFor(10_000, "MAX открылся", { root()?.packageName?.toString() == pkg }) {
-            h.postDelayed({ openSearch() }, 800)
-        }
+        fun start() = waitFor(10_000, "MAX открылся", { root()?.packageName?.toString() == pkg },
+            ok = { h.postDelayed({ openSearch() }, 800) })
 
         private fun root(): AccessibilityNodeInfo? = svc.rootInActiveWindow
 

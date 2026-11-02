@@ -179,8 +179,9 @@ class Assistant(private val act: MainActivity) {
             }
             Cmd.MESSAGE -> {
                 val cands = Contacts.match(people, text, p)
-                if (cands.isNotEmpty()) msgWhat(cands[0], 0)
-                else say(p.msgWhom) { msgWhom() }
+                val channel = p.msgChannel(text)
+                if (cands.isNotEmpty()) msgChooseChannel(cands[0], channel)
+                else say(p.msgWhom) { msgWhom(channel) }
             }
             Cmd.CALL_VERB, Cmd.NONE -> {
                 val cands = Contacts.match(people, text, p)
@@ -194,45 +195,62 @@ class Assistant(private val act: MainActivity) {
         }
     }
 
-    // ---------- сообщения в MAX ----------
+    // ---------- сообщения: СМС или MAX ----------
 
-    private fun msgWhom() {
+    private fun msgWhom(channel: Boolean?) {
         listen(commandGrammar(), 8000) { text ->
             val c = text?.let { Contacts.match(people, it, phr) }.orEmpty()
-            if (c.isEmpty()) say(phr.msgCancelled) else msgWhat(c[0], 0)
+            if (c.isEmpty()) say(phr.msgCancelled) else msgChooseChannel(c[0], channel ?: text?.let { phr.msgChannel(it) })
         }
     }
 
-    private fun msgWhat(person: Person, attempt: Int) {
-        say(if (attempt == 0) phr.msgWhat(person.name) else phr.msgWhatAgain) {
+    /** sms: true — СМС, false — Макс, null — спросить (если Макса нет — сразу СМС). */
+    private fun msgChooseChannel(person: Person, sms: Boolean?) {
+        if (sms != null) { msgWhat(person, sms, 0); return }
+        if (MaxSender.findPackage(act) == null) { msgWhat(person, true, 0); return }
+        say(phr.msgWhere) {
+            listen(smallGrammar(phr.channelPhrases), 6000) { text ->
+                val ch = text?.let { phr.msgChannel(it) }
+                if (ch == null) say(phr.msgCancelled) else msgWhat(person, ch, 0)
+            }
+        }
+    }
+
+    private fun msgWhat(person: Person, sms: Boolean, attempt: Int) {
+        say(if (attempt == 0) phr.msgWhat(person.name, sms) else phr.msgWhatAgain) {
             listen(null, 15000) { text ->
                 when {
-                    text != null -> msgConfirm(person, text)
-                    attempt == 0 -> msgWhat(person, 1)
+                    text != null -> msgConfirm(person, text, sms)
+                    attempt == 0 -> msgWhat(person, sms, 1)
                     else -> say(phr.msgCancelled)
                 }
             }
         }
     }
 
-    private fun msgConfirm(person: Person, text: String) {
-        say(phr.msgConfirm(person.name, text)) {
+    private fun msgConfirm(person: Person, text: String, sms: Boolean) {
+        say(phr.msgConfirm(person.name, text, sms)) {
             askYesNo { yes ->
-                if (yes == true) {
-                    val s = session
-                    say(phr.msgSending(person.name)) {
-                        act.moveTaskToBack(true)
-                        MaxSender.send(act, person.name, text) { fail ->
-                            val msg = if (fail == null) phr.msgSent(person.name) else phr.msgFailed(fail)
-                            lastAnswer = msg
-                            // Вернуться к помощнику и сказать результат.
-                            act.startActivity(android.content.Intent(act, MainActivity::class.java)
-                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
-                            if (s == session) say(msg) else sp.say(msg)
+                when {
+                    yes != true -> say(phr.msgCancelled)
+                    sms -> {
+                        val ok = Sms.send(act, person.number, text)
+                        answer(if (ok) phr.msgSent(person.name) else phr.smsFailed)
+                    }
+                    else -> {
+                        val s = session
+                        say(phr.msgSending(person.name)) {
+                            act.moveTaskToBack(true)
+                            MaxSender.send(act, person.name, text) { fail ->
+                                val msg = if (fail == null) phr.msgSent(person.name) else phr.msgFailed(fail)
+                                lastAnswer = msg
+                                // Вернуться к помощнику и сказать результат.
+                                act.startActivity(android.content.Intent(act, MainActivity::class.java)
+                                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+                                if (s == session) say(msg) else sp.say(msg)
+                            }
                         }
                     }
-                } else {
-                    say(phr.msgCancelled)
                 }
             }
         }

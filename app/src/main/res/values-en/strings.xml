@@ -9,7 +9,7 @@
     <string name="setup_intro">For family members. Tap each amber tile and allow it. A green frame with a check mark means done.</string>
     <string name="lang_title">Interface language</string>
     <string name="lang_note">This changes everything: on-screen text, the assistant\'s speech and voice commands. After switching, the first load of speech recognition takes up to a minute.</string>
-    <string name="step_permissions">1. Permissions: microphone, contacts, calls, answering calls, location</string>
+    <string name="step_permissions">1. Permissions: microphone, contacts, calls, SMS, answering calls, location</string>
     <string name="step_overlay">2. Display over other apps (greeting on the side button and answering calls by voice)</string>
     <string name="step_battery">3. Battery: no restrictions (otherwise the system stops the assistant)</string>
     <string name="step_alarms">4. Exact reminders</string>
@@ -81,10 +81,10 @@
     <string name="reader_last_stop" formatted="true">Last time reading stopped: %1$s</string>
     <string name="echo_on" formatted="true">✓ Echo cancellation is on: the assistant doesn\'t hear its own voice (%1$s)</string>
     <string name="echo_off" formatted="true">✗ This phone has no echo cancellation; the assistant may hear its own voice (%1$s)</string>
-    <string name="max_title">Messages in Max</string>
+    <string name="max_title">Messages: SMS and Max</string>
     <string name="max_found" formatted="true">✓ Max found (%1$s)</string>
     <string name="max_missing">✗ Max isn\'t installed</string>
-    <string name="max_note">Say «message my daughter» — the assistant asks for the text, reads it back and sends it in Max. Screen reading (step 9) must be on. Don\'t touch the screen while it sends.</string>
+    <string name="max_note">«Message my daughter» — the assistant asks where (SMS or Max) and what, reads it back and sends it. «Text my daughter» or «…on Max» skips the question. Max needs screen reading (step 9); don\'t touch the screen while it sends.</string>
     <string name="max_snapshot">Capture a Max screen report (for the developer)</string>
     <string name="max_last">Last attempt:</string>
     <string name="max_share">Share the report</string>

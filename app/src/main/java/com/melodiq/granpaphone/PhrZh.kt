@@ -204,9 +204,22 @@ object PhrZh : Phrases {
     override val msgVerbs: List<String> = emptyList()
     override fun isMessage(text: String) = has(compact(text), "发消息", "发信息", "发短信", "写信息", "留言", "发个消息")
     override val msgWhom = "给谁发消息？"
-    override fun msgWhat(name: String) = "在Max上给${name}发消息。要说什么？请在提示音后说。"
+    override fun msgChannel(text: String): Boolean? {
+        val s = compact(text)
+        return when {
+            has(s, "短信") -> true
+            has(s, "max", "麦克斯") -> false
+            else -> null
+        }
+    }
+    override val msgWhere = "发短信还是用Max？"
+    override val channelPhrases: List<String> = emptyList()
+    override fun msgWhat(name: String, sms: Boolean) =
+        (if (sms) "给${name}发短信。" else "在Max上给${name}发消息。") + "要说什么？请在提示音后说。"
     override val msgWhatAgain = "没听清。要发什么？"
-    override fun msgConfirm(name: String, text: String) = "发给${name}：${text}。发送吗？"
+    override fun msgConfirm(name: String, text: String, sms: Boolean) =
+        (if (sms) "短信" else "Max消息") + "发给${name}：${text}。发送吗？"
+    override val smsFailed = "短信没有发出去。请家人检查权限。"
     override fun msgSending(name: String) = "正在发送，请几秒内不要触摸屏幕。"
     override fun msgSent(name: String) = "已发送给${name}。"
     override fun msgFailed(f: MaxSender.Fail) = when (f) {

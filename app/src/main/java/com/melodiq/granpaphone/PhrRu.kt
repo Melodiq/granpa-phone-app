@@ -239,9 +239,22 @@ object PhrRu : Phrases {
         return has(w, "напиши", "написать", "сообщение", "сообщения", "отправь", "отправить") && !has(w, "запиши")
     }
     override val msgWhom = "Кому написать?"
-    override fun msgWhat(name: String) = "Пишу $name в Макс. Что написать? Говорите после сигнала."
+    override fun msgChannel(text: String): Boolean? {
+        val w = words(text)
+        return when {
+            has(w, "смс", "эсэмэс", "смской", "смску", "сообщением", "обычное", "обычной") -> true
+            has(w, "макс", "максе", "макса", "мах") -> false
+            else -> null
+        }
+    }
+    override val msgWhere = "Куда написать: эсэмэс или Макс?"
+    override val channelPhrases = listOf("смс", "эсэмэс", "макс", "в макс", "в максе", "обычное", "смской")
+    override fun msgWhat(name: String, sms: Boolean) =
+        "Пишу $name " + (if (sms) "эсэмэс" else "в Макс") + ". Что написать? Говорите после сигнала."
     override val msgWhatAgain = "Не расслышал. Что написать?"
-    override fun msgConfirm(name: String, text: String) = "Пишу $name: $text. Отправить?"
+    override fun msgConfirm(name: String, text: String, sms: Boolean) =
+        (if (sms) "Эсэмэс для $name" else "Макс, для $name") + ": $text. Отправить?"
+    override val smsFailed = "Не получилось отправить эсэмэс. Попросите родных проверить разрешения."
     override fun msgSending(name: String) = "Отправляю. Не трогайте экран пару секунд."
     override fun msgSent(name: String) = "Отправил: $name."
     override fun msgFailed(f: MaxSender.Fail) = when (f) {
@@ -274,7 +287,8 @@ object PhrRu : Phrases {
         "отдыхай полчаса", "отдыхай час", "отдохни полчаса", "отдохни час", "отдыхай тридцать минут",
         "позвонить", "позвони", "набери", "звонок",
         "прочитай экран", "что на экране", "прочитай", "читай экран",
-        "напиши", "отправь сообщение", "напиши сообщение", "сообщение"
+        "напиши", "отправь сообщение", "напиши сообщение", "сообщение",
+        "смс", "эсэмэс", "макс", "в макс", "напиши смс", "напиши в макс", "отправь смс"
     )
     override val callVerbs = listOf("позвони", "позвонить", "набери", "звони", "вызови", "позвоните")
     override fun contactForms(word: String) = Contacts.wordForms(word)

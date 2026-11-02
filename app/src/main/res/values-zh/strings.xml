@@ -9,7 +9,7 @@
     <string name="setup_intro">供家人使用。点击每个黄色方块并允许。带勾的绿色边框表示已完成。</string>
     <string name="lang_title">界面语言</string>
     <string name="lang_note">这会切换所有内容：屏幕文字、助手语音和语音命令。切换后首次加载语音识别最多需要一分钟。</string>
-    <string name="step_permissions">1. 权限：麦克风、联系人、通话、接听电话、位置</string>
+    <string name="step_permissions">1. 权限：麦克风、联系人、通话、短信、接听电话、位置</string>
     <string name="step_overlay">2. 显示在其他应用上层（按侧键时问候、语音接听电话）</string>
     <string name="step_battery">3. 电池：无限制（否则系统会关闭助手）</string>
     <string name="step_alarms">4. 精确提醒</string>
@@ -81,10 +81,10 @@
     <string name="reader_last_stop" formatted="true">上次停止朗读的原因：%1$s</string>
     <string name="echo_on" formatted="true">✓ 回声消除已开启：助手听不到自己的声音（%1$s）</string>
     <string name="echo_off" formatted="true">✗ 此手机不支持回声消除，助手可能听到自己的声音（%1$s）</string>
-    <string name="max_title">Max 消息</string>
+    <string name="max_title">消息：短信和 Max</string>
     <string name="max_found" formatted="true">✓ 已找到 Max（%1$s）</string>
     <string name="max_missing">✗ 未安装 Max</string>
-    <string name="max_note">说「给女儿发消息」——助手会询问内容、复述确认并在 Max 中发送。需要开启读屏（第 9 项）。发送时请勿触摸屏幕。</string>
+    <string name="max_note">「给女儿发消息」——助手会问发短信还是用 Max、内容，复述后发送。「给女儿发短信」直接发短信。Max 需要开启读屏（第 9 项）；发送时请勿触摸屏幕。</string>
     <string name="max_snapshot">获取 Max 屏幕报告（供开发者）</string>
     <string name="max_last">最近一次尝试：</string>
     <string name="max_share">分享报告</string>
