@@ -191,3 +191,7 @@ Every command is confirmed with a sound and a vibration. A big colored circle sh
 ## Tech
 
 Kotlin, plain Android views. Offline speech recognition: [Vosk](https://alphacephei.com/vosk/) (small Russian, English and Chinese models) with a restricted command grammar and per-word confidence filtering; microphone input uses the voice-communication source with Android's acoustic echo canceler. Speech output: system text-to-speech. Screen reading: an accessibility service with a glowing edge overlay. Weather: [Open-Meteo](https://open-meteo.com/), fallback [MET Norway](https://api.met.no/). GitHub Actions builds the APK on every push to `main` and publishes it to Releases.
+
+## Лицензия
+
+[MIT](LICENSE)
