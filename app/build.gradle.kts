@@ -11,8 +11,8 @@ android {
         applicationId = "com.melodiq.granpaphone"
         minSdk = 24
         targetSdk = 34
-        versionCode = 20
-        versionName = "0.20"
+        versionCode = 21
+        versionName = "0.21"
     }
 
     signingConfigs {

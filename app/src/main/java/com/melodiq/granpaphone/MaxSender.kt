@@ -163,14 +163,16 @@ object MaxSender {
         private fun pickContact(attempt: Int) {
             val r = root()
             val want = Ru.norm(name)
-            val hit = findNode(r) { n ->
-                val t = n.text?.toString() ?: n.contentDescription?.toString() ?: return@findNode false
-                n.className?.toString()?.contains("EditText") != true && n.isVisibleToUser &&
-                    Ru.norm(t).let { it == want || it.startsWith(want) }
-            } ?: findNode(r) { n ->
-                val t = n.text?.toString() ?: return@findNode false
-                n.className?.toString()?.contains("EditText") != true && n.isVisibleToUser && Ru.norm(t).contains(want)
+            // В MAX строка чата — нажимаемый блок с описанием «Имя.Чат закреплён..Последнее сообщение…»
+            // и надписью «Имя» внутри. Сначала ищем точное имя, потом начало.
+            fun nameOf(n: AccessibilityNodeInfo): String? {
+                if (n.className?.toString()?.contains("EditText") == true || !n.isVisibleToUser) return null
+                n.text?.toString()?.let { return Ru.norm(it) }
+                return n.contentDescription?.toString()?.substringBefore('.')?.let { Ru.norm(it) }
             }
+            val hit = findNode(r) { n -> nameOf(n) == want }
+                ?: findNode(r) { n -> nameOf(n)?.startsWith("$want ") == true }
+                ?: findNode(r) { n -> nameOf(n)?.contains(want) == true }
             if (hit == null) {
                 if (attempt < 4) { h.postDelayed({ pickContact(attempt + 1) }, 700); return }
                 note("✗ контакт не найден в результатах\n" + dump(r))
