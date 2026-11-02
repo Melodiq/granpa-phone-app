@@ -201,6 +201,23 @@ object PhrZh : Phrases {
     }
     override fun isStop(text: String) = has(compact(text), "休息", "挂断", "挂掉", "别念了", "停止朗读", "阿廖沙停", "阿廖沙别")
 
+    override val msgVerbs: List<String> = emptyList()
+    override fun isMessage(text: String) = has(compact(text), "发消息", "发信息", "发短信", "写信息", "留言", "发个消息")
+    override val msgWhom = "给谁发消息？"
+    override fun msgWhat(name: String) = "在Max上给${name}发消息。要说什么？请在提示音后说。"
+    override val msgWhatAgain = "没听清。要发什么？"
+    override fun msgConfirm(name: String, text: String) = "发给${name}：${text}。发送吗？"
+    override fun msgSending(name: String) = "正在发送，请几秒内不要触摸屏幕。"
+    override fun msgSent(name: String) = "已发送给${name}。"
+    override fun msgFailed(f: MaxSender.Fail) = when (f) {
+        MaxSender.Fail.NOT_INSTALLED -> "手机上没有安装Max。"
+        MaxSender.Fail.NO_READER -> "要在Max上发消息，请家人在助手设置中开启读屏。"
+        MaxSender.Fail.NO_CONTACT -> "在Max里没找到这个联系人，消息没有发送。"
+        MaxSender.Fail.BUSY -> "请稍等，上一条消息还在发送。"
+        else -> "没能在Max上发送，消息没有发送。"
+    }
+    override val msgCancelled = "好的，不发送。"
+
     override val voiceSample = "您好，我是阿廖沙，您的助手。这是我的声音。"
     override fun voiceTest(c: Calendar) = "语音测试。" + timeText(c)
 
@@ -247,6 +264,7 @@ object PhrZh : Phrases {
         val weather = has(s, "天气", "气温", "温度")
         return when {
             isReadScreen(text) -> Cmd.READ_SCREEN
+            isMessage(text) -> Cmd.MESSAGE
             has(s, "休息", "睡觉", "晚安", "退下") -> Cmd.SLEEP
             has(s, "取消", "停止", "算了") -> Cmd.CANCEL
             has(s, "重复", "再说一遍", "再说一次") -> Cmd.REPEAT

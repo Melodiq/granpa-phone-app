@@ -233,6 +233,26 @@ object PhrRu : Phrases {
             (has(w, "алеша") && has(w, "стоп")) || (has(w, "хватит") && has(w, "читать"))
     }
 
+    override val msgVerbs = listOf("напиши", "написать", "отправь сообщение", "сообщение", "напиши сообщение", "отправь")
+    override fun isMessage(text: String): Boolean {
+        val w = words(text)
+        return has(w, "напиши", "написать", "сообщение", "сообщения", "отправь", "отправить") && !has(w, "запиши")
+    }
+    override val msgWhom = "Кому написать?"
+    override fun msgWhat(name: String) = "Пишу $name в Макс. Что написать? Говорите после сигнала."
+    override val msgWhatAgain = "Не расслышал. Что написать?"
+    override fun msgConfirm(name: String, text: String) = "Пишу $name: $text. Отправить?"
+    override fun msgSending(name: String) = "Отправляю. Не трогайте экран пару секунд."
+    override fun msgSent(name: String) = "Отправил: $name."
+    override fun msgFailed(f: MaxSender.Fail) = when (f) {
+        MaxSender.Fail.NOT_INSTALLED -> "Макс не установлен на телефоне."
+        MaxSender.Fail.NO_READER -> "Чтобы писать в Макс, попросите родных включить чтение экрана в настройке помощника."
+        MaxSender.Fail.NO_CONTACT -> "Не нашёл этот контакт в Максе. Сообщение не отправлено."
+        MaxSender.Fail.BUSY -> "Подождите, я ещё отправляю прошлое сообщение."
+        else -> "Не получилось отправить в Макс. Сообщение не отправлено."
+    }
+    override val msgCancelled = "Хорошо, не отправляю."
+
     override val voiceSample = "Здравствуйте. Я Алёша, ваш помощник. Так звучит мой голос."
     override fun voiceTest(c: Calendar) = "Проверка голоса. " + timeText(c)
 
@@ -253,7 +273,8 @@ object PhrRu : Phrases {
         "отбой на полчаса", "отбой на тридцать минут", "отбой на час", "отбой на два часа",
         "отдыхай полчаса", "отдыхай час", "отдохни полчаса", "отдохни час", "отдыхай тридцать минут",
         "позвонить", "позвони", "набери", "звонок",
-        "прочитай экран", "что на экране", "прочитай", "читай экран"
+        "прочитай экран", "что на экране", "прочитай", "читай экран",
+        "напиши", "отправь сообщение", "напиши сообщение", "сообщение"
     )
     override val callVerbs = listOf("позвони", "позвонить", "набери", "звони", "вызови", "позвоните")
     override fun contactForms(word: String) = Contacts.wordForms(word)
@@ -280,6 +301,7 @@ object PhrRu : Phrases {
         val weather = has(w, "погода", "погоду", "погодой", "улице")
         return when {
             isReadScreen(text) -> Cmd.READ_SCREEN
+            isMessage(text) -> Cmd.MESSAGE
             w.any { it in sleepWords } -> Cmd.SLEEP
             has(w, "отмена", "стоп") -> Cmd.CANCEL
             has(w, "повтори") || (has(w, "еще") && has(w, "раз")) -> Cmd.REPEAT

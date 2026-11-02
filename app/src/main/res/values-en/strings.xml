@@ -81,4 +81,11 @@
     <string name="reader_last_stop" formatted="true">Last time reading stopped: %1$s</string>
     <string name="echo_on" formatted="true">✓ Echo cancellation is on: the assistant doesn\'t hear its own voice (%1$s)</string>
     <string name="echo_off" formatted="true">✗ This phone has no echo cancellation; the assistant may hear its own voice (%1$s)</string>
+    <string name="max_title">Messages in Max</string>
+    <string name="max_found" formatted="true">✓ Max found (%1$s)</string>
+    <string name="max_missing">✗ Max isn\'t installed</string>
+    <string name="max_note">Say «message my daughter» — the assistant asks for the text, reads it back and sends it in Max. Screen reading (step 9) must be on. Don\'t touch the screen while it sends.</string>
+    <string name="max_snapshot">Capture a Max screen report (for the developer)</string>
+    <string name="max_last">Last attempt:</string>
+    <string name="max_share">Share the report</string>
 </resources>

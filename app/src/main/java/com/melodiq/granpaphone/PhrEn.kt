@@ -219,6 +219,26 @@ object PhrEn : Phrases {
             (has(w, "stop") && has(w, "alyosha", "alex", "reading"))
     }
 
+    override val msgVerbs = listOf("message", "text", "write to", "send a message to", "send message to")
+    override fun isMessage(text: String): Boolean {
+        val w = words(text)
+        return has(w, "message", "text", "write") && !has(w, "note")
+    }
+    override val msgWhom = "Who should I write to?"
+    override fun msgWhat(name: String) = "Writing to $name on Max. What should I say? Speak after the beep."
+    override val msgWhatAgain = "I didn't catch that. What should I write?"
+    override fun msgConfirm(name: String, text: String) = "To $name: $text. Send it?"
+    override fun msgSending(name: String) = "Sending. Please don't touch the screen for a couple of seconds."
+    override fun msgSent(name: String) = "Sent to $name."
+    override fun msgFailed(f: MaxSender.Fail) = when (f) {
+        MaxSender.Fail.NOT_INSTALLED -> "Max isn't installed on this phone."
+        MaxSender.Fail.NO_READER -> "To write in Max, ask your family to turn on screen reading in the assistant's setup."
+        MaxSender.Fail.NO_CONTACT -> "I couldn't find this contact in Max. The message wasn't sent."
+        MaxSender.Fail.BUSY -> "Please wait, I'm still sending the previous message."
+        else -> "I couldn't send it in Max. The message wasn't sent."
+    }
+    override val msgCancelled = "Okay, not sending."
+
     override val voiceSample = "Hello. I'm Alyosha, your assistant. This is how my voice sounds."
     override fun voiceTest(c: Calendar) = "Voice test. " + timeText(c)
 
@@ -237,7 +257,8 @@ object PhrEn : Phrases {
         "rest for half an hour", "rest for thirty minutes", "rest for an hour", "rest for one hour", "rest for two hours",
         "sleep for half an hour", "sleep for an hour",
         "call", "make a call", "phone",
-        "read the screen", "read screen", "what's on the screen", "read"
+        "read the screen", "read screen", "what's on the screen", "read",
+        "message", "send a message", "write a message"
     )
     override val callVerbs = listOf("call", "phone", "dial", "ring")
 
@@ -281,6 +302,7 @@ object PhrEn : Phrases {
         val afterTomorrow = hasSeq(w, "after", "tomorrow")
         return when {
             isReadScreen(text) -> Cmd.READ_SCREEN
+            isMessage(text) -> Cmd.MESSAGE
             has(w, "rest", "sleep", "goodnight") -> Cmd.SLEEP
             has(w, "cancel", "stop") -> Cmd.CANCEL
             has(w, "repeat", "again") -> Cmd.REPEAT

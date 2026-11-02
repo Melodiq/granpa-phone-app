@@ -7,7 +7,7 @@ import java.util.Locale
 /** Что пользователь попросил. */
 enum class Cmd {
     SLEEP, CANCEL, REPEAT, HELP, DELETE, NOTE, LIST_ALL, LIST_TODAY, LIST_TOMORROW,
-    WEATHER_NOW, WEATHER_TOMORROW, WEATHER_AFTER, DATE, TIME, CALL_VERB, READ_SCREEN, NONE
+    WEATHER_NOW, WEATHER_TOMORROW, WEATHER_AFTER, DATE, TIME, CALL_VERB, READ_SCREEN, MESSAGE, NONE
 }
 
 /**
@@ -101,6 +101,19 @@ interface Phrases {
     /** Во время чтения — только вместе со словом пробуждения («Алёша, стоп»): читаемый текст его почти не содержит. */
     val readStopPhrases: List<String>
     fun isReadStop(text: String): Boolean
+
+    // ---------- сообщения в MAX ----------
+    /** «напиши», «отправь сообщение» — для списка распознавания вместе с именами. */
+    val msgVerbs: List<String>
+    fun isMessage(text: String): Boolean
+    val msgWhom: String
+    fun msgWhat(name: String): String
+    val msgWhatAgain: String
+    fun msgConfirm(name: String, text: String): String
+    fun msgSending(name: String): String
+    fun msgSent(name: String): String
+    fun msgFailed(f: MaxSender.Fail): String
+    val msgCancelled: String
 
     val voiceSample: String
     fun voiceTest(c: Calendar): String

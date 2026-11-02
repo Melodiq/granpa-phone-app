@@ -32,6 +32,10 @@ A voice assistant for Android for an elderly person who can barely see. Everythi
 - Падежи и заглавные буквы не важны: «дочь», «дочке», «дочери», «доча» — один контакт.
 - **«Отбой»** во время звонка (и пока номер набирается) кладёт трубку.
 
+### Сообщения в Макс
+
+«Напиши дочери» → «Что написать?» → диктуете → «Пишу Дочь: …. Отправить?» → «Да» — помощник сам открывает Макс, находит контакт и отправляет. Нужно включённое чтение экрана; пока идёт отправка, экран не трогать.
+
 ### Входящий звонок
 
 <p align="center"><img src="docs/img/incoming-call.svg" width="640" alt="Экран входящего звонка: Звонит — Дочь, ответ голосом"></p>
@@ -124,6 +128,7 @@ Every command is confirmed with a sound and a vibration. A big colored circle sh
 ### Features
 
 - **Calls by voice:** "call my daughter" → "Call Daughter? Say yes or no" → "yes". Say **"rest"** during a call (even while dialing) to hang up.
+- **Messages in Max:** "message my daughter" → dictate → confirm → the assistant opens Max, finds the contact and sends it (needs screen reading on).
 - **Incoming calls:** the caller is announced by name, even with the screen off and over the system call screen. Answer: "answer", "pick up", or tap the screen. Decline: "decline", "hang up".
 - **Screen reading:** **"Alyosha, read the screen"** reads all on-screen text aloud while the screen edges glow. Stop: tap the screen, a volume button, or "Alyosha, stop".
 - **Time, date, weather:** "what time is it", "what's the date", "weather", "weather tomorrow", "weather the day after tomorrow". Weather: Open-Meteo, MET Norway as a fallback.
@@ -161,6 +166,7 @@ Every command is confirmed with a sound and a vibration. A big colored circle sh
 ### 功能
 
 - **语音打电话：** 「给女儿打电话」→「给女儿打电话吗？」→「是」。通话中（包括拨号时）说 **「休息」** 挂断。
+- **Max 消息：** 「给女儿发消息」→ 口述内容 → 确认 → 助手打开 Max、找到联系人并发送（需开启读屏）。
 - **来电：** 朗读来电人姓名，熄屏时和系统来电界面之上也可用。接听：「接听」或点击屏幕；挂断：「挂断」「不接」。
 - **读屏：** **「阿廖沙，读屏幕」** 朗读屏幕上的全部文字，屏幕边缘发光。停止：点击屏幕、音量键或「阿廖沙，停」。
 - **时间、日期、天气：** 「几点了」「今天几号」「天气」「明天天气」「后天天气」。天气来自 Open-Meteo，备用 MET Norway。

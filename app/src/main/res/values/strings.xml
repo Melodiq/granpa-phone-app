@@ -81,4 +81,11 @@
     <string name="reader_last_stop" formatted="true">Последняя остановка чтения: %1$s</string>
     <string name="echo_on" formatted="true">✓ Эхоподавление работает: помощник не слышит свой голос (%1$s)</string>
     <string name="echo_off" formatted="true">✗ На этом телефоне нет эхоподавления — помощник может слышать свой голос (%1$s)</string>
+    <string name="max_title">Сообщения в Макс</string>
+    <string name="max_found" formatted="true">✓ Макс найден (%1$s)</string>
+    <string name="max_missing">✗ Макс не установлен</string>
+    <string name="max_note">Команда «напиши дочери» — помощник спросит текст, переспросит и сам отправит в Макс. Нужно включённое чтение экрана (пункт 9). Пока помощник отправляет, экран трогать нельзя.</string>
+    <string name="max_snapshot">Снять отчёт об экране Макс (для разработчика)</string>
+    <string name="max_last">Последняя попытка:</string>
+    <string name="max_share">Поделиться отчётом</string>
 </resources>

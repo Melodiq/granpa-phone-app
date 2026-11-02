@@ -141,6 +141,8 @@ class SetupActivity : Activity() {
             note(getString(if (on) R.string.echo_on else R.string.echo_off, EchoFreeMic.echoDetails))
         }
 
+        maxSection()
+
         if (isXiaomi()) xiaomiSection()
 
         button(getString(R.string.step_autostart)) {
@@ -208,6 +210,32 @@ class SetupActivity : Activity() {
             }
         }
         note(getString(R.string.lang_note))
+    }
+
+    /** Сообщения в MAX: проверка и отчёт для разработчика. */
+    private fun maxSection() {
+        title(getString(R.string.max_title))
+        val pkg = MaxSender.findPackage(this)
+        note(if (pkg != null) getString(R.string.max_found, pkg) else getString(R.string.max_missing))
+        note(getString(R.string.max_note))
+        if (pkg != null && ScreenReaderService.isOn) {
+            button(getString(R.string.max_snapshot)) {
+                MaxSender.snapshot(this) {
+                    startActivity(Intent(this, SetupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+                }
+            }
+        }
+        if (MaxSender.lastLog.isNotEmpty()) {
+            note(getString(R.string.max_last) + "\n" + MaxSender.lastLog.lines().take(12).joinToString("\n"))
+            button(getString(R.string.max_share)) {
+                try {
+                    startActivity(Intent.createChooser(
+                        Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, MaxSender.lastLog),
+                        getString(R.string.max_share)
+                    ))
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     private fun isXiaomi(): Boolean {
