@@ -181,15 +181,58 @@ object MaxSender {
             }
             note("✓ контакт: ${describe(hit)}")
             tap(hit)
-            waitFor(5000, "открылся чат", { messageInput(root()) != null }, { typeMessage() }, { done(Fail.NO_INPUT) })
+            waitFor(6000, "открылся чат", { messageInput(root()) != null || placeholder(root()) != null },
+                { h.postDelayed({ typeMessage(0) }, 500) }, { done(Fail.NO_INPUT) })
         }
 
         // 4. Вписать текст сообщения.
-        private fun typeMessage() {
-            val input = messageInput(root()) ?: run { done(Fail.NO_INPUT); return }
-            setText(input, text)
-            note("✓ вписал текст")
-            h.postDelayed({ pressSend(0) }, 700)
+        private fun typeMessage(attempt: Int) {
+            var input = messageInput(root())
+            if (input == null) {
+                // Поле «Сообщение» ещё не активно — коснуться надписи, чтобы появилось поле ввода.
+                val ph = placeholder(root())
+                if (ph != null && attempt < 3) {
+                    note("… касаюсь «Сообщение»: ${describe(ph)}")
+                    tap(ph)
+                    h.postDelayed({ typeMessage(attempt + 1) }, 900)
+                    return
+                }
+                input = root()?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            }
+            if (input == null) {
+                note("✗ нет поля ввода\n" + dump(root()))
+                done(Fail.NO_INPUT)
+                return
+            }
+            note("✓ поле ввода: ${describe(input)}")
+            if (!setText(input, text)) {
+                note("… ввод не принят, вставляю через буфер обмена")
+                paste(input, text)
+            }
+            h.postDelayed({
+                val now = messageInput(root())?.text?.toString() ?: ""
+                note(if (now.contains(text.take(5))) "✓ текст в поле" else "? в поле: «${now.take(40)}»")
+                pressSend(0)
+            }, 700)
+        }
+
+        /** Надпись-подсказка «Сообщение» в нижней половине экрана. */
+        private fun placeholder(r: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+            val half = svc.resources.displayMetrics.heightPixels / 2
+            return findNode(r) { n ->
+                val s = label(n).trim()
+                (s == "сообщение" || s.startsWith("сообщение") || s == "message") && n.isVisibleToUser &&
+                    Rect().also { b -> n.getBoundsInScreen(b) }.top > half
+            }
+        }
+
+        private fun paste(n: AccessibilityNodeInfo, s: String) {
+            try {
+                val cm = svc.getSystemService(android.content.ClipboardManager::class.java)
+                cm?.setPrimaryClip(android.content.ClipData.newPlainText("msg", s))
+                n.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                n.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+            } catch (_: Exception) {}
         }
 
         // 5. Нажать «Отправить».
@@ -224,19 +267,22 @@ object MaxSender {
         private fun messageInput(r: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
             val edits = ArrayList<AccessibilityNodeInfo>()
             collect(r) { if (it.isEditable && it.isVisibleToUser) edits.add(it) }
-            if (edits.isEmpty()) return null
+            if (edits.isEmpty()) {
+                val f = r?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return null
+                return f.takeIf { Rect().also { b -> it.getBoundsInScreen(b) }.top > svc.resources.displayMetrics.heightPixels / 2 }
+            }
             edits.firstOrNull { val s = label(it); s.contains("сообщ") || s.contains("message") }?.let { return it }
             // Иначе — самое нижнее поле ввода на экране (поле сообщения всегда внизу).
             return edits.maxByOrNull { Rect().also { b -> it.getBoundsInScreen(b) }.bottom }
                 ?.takeIf { Rect().also { b -> it.getBoundsInScreen(b) }.top > svc.resources.displayMetrics.heightPixels / 2 }
         }
 
-        private fun setText(n: AccessibilityNodeInfo, s: String) {
+        private fun setText(n: AccessibilityNodeInfo, s: String): Boolean {
             n.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
             val args = Bundle().apply {
                 putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, s)
             }
-            n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+            return n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
         }
 
         /** Нажать: на сам элемент или ближайшего нажимаемого родителя; если не вышло — касание по координатам. */
