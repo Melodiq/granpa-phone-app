@@ -79,4 +79,6 @@
     <string name="sens_note">Hard to call? Go higher. Reacts to TV and videos? Go lower.</string>
     <string name="wake_last" formatted="true">Last heard (word and confidence): %1$s</string>
     <string name="reader_last_stop" formatted="true">Last time reading stopped: %1$s</string>
+    <string name="echo_on" formatted="true">✓ Echo cancellation is on: the assistant doesn\'t hear its own voice (%1$s)</string>
+    <string name="echo_off" formatted="true">✗ This phone has no echo cancellation; the assistant may hear its own voice (%1$s)</string>
 </resources>

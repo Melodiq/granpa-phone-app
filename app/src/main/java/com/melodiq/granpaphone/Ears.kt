@@ -8,7 +8,6 @@ import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
 import org.vosk.android.RecognitionListener
-import org.vosk.android.SpeechService
 import org.vosk.android.StorageService
 import java.io.File
 
@@ -26,7 +25,7 @@ class Ears(private val ctx: Context) {
         private set
 
     private val waiters = mutableListOf<() -> Unit>()
-    private var service: SpeechService? = null
+    private var service: EchoFreeMic? = null
     private var recognizer: Recognizer? = null
 
     /** Какая модель загружена (папка в assets: model-ru, model-en, model-zh). */
@@ -199,9 +198,10 @@ class Ears(private val ctx: Context) {
                     finish(null)
                 }
             }
-            val s = SpeechService(rec, 16000f)
+            // Свой микрофон с эхоподавлением: помощник не слышит собственный голос.
+            val s = EchoFreeMic(rec)
             service = s
-            s.startListening(listener, timeoutMs)
+            if (!s.start(listener, timeoutMs)) throw IllegalStateException("микрофон не открылся")
         } catch (e: Exception) {
             stop()
             cb(null)
@@ -214,8 +214,7 @@ class Ears(private val ctx: Context) {
         val s = service
         service = null
         if (s != null) {
-            try { s.cancel() } catch (_: Exception) {}
-            try { s.shutdown() } catch (_: Exception) {}
+            try { s.stop() } catch (_: Exception) {}
         }
         val r = recognizer
         recognizer = null

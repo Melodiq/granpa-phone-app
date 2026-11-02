@@ -79,4 +79,6 @@
     <string name="sens_note">难以唤醒就调高；被电视和视频触发就调低。</string>
     <string name="wake_last" formatted="true">最近听到（词和置信度）：%1$s</string>
     <string name="reader_last_stop" formatted="true">上次停止朗读的原因：%1$s</string>
+    <string name="echo_on" formatted="true">✓ 回声消除已开启：助手听不到自己的声音（%1$s）</string>
+    <string name="echo_off" formatted="true">✗ 此手机不支持回声消除，助手可能听到自己的声音（%1$s）</string>
 </resources>

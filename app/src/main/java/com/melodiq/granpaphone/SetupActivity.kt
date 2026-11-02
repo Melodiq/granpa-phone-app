@@ -137,6 +137,10 @@ class SetupActivity : Activity() {
             }
         }
 
+        EchoFreeMic.echoActive?.let { on ->
+            note(getString(if (on) R.string.echo_on else R.string.echo_off, EchoFreeMic.echoDetails))
+        }
+
         if (isXiaomi()) xiaomiSection()
 
         button(getString(R.string.step_autostart)) {
