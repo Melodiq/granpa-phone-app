@@ -126,9 +126,13 @@ object MaxSender {
         // 1. Поиск в списке чатов.
         private fun openSearch() {
             val r = root()
+            // Кнопка поиска — только в шапке (верхняя пятая часть экрана) и с короткой подписью,
+            // чтобы не нажать на сообщение в переписке, где встретилось слово «поиск».
+            val topZone = svc.resources.displayMetrics.heightPixels / 5
             val search = findNode(r) { n ->
-                val s = label(n)
-                (s.contains("поиск") || s.contains("search") || s.contains("найти")) && n.isVisibleToUser
+                val s = label(n).trim()
+                (s.contains("поиск") || s.contains("search") || s.contains("найти")) && s.length <= 25 &&
+                    n.isVisibleToUser && Rect().also { b -> n.getBoundsInScreen(b) }.top < topZone
             }
             if (search == null) {
                 // Возможно, открыт чат с прошлого раза — шаг назад.
