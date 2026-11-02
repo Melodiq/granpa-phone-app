@@ -235,25 +235,45 @@ object MaxSender {
             } catch (_: Exception) {}
         }
 
-        // 5. Нажать «Отправить».
+        // 5. Нажать «Отправить» — только кнопку в строке поля ввода, а не сообщения в переписке
+        //    (у них в описании тоже есть «Отправлено»).
         private fun pressSend(attempt: Int) {
             val r = root()
-            val send = findNode(r) { n ->
-                val s = label(n) + " " + (n.viewIdResourceName ?: "").lowercase()
-                (s.contains("отправ") || s.contains("send")) && n.isVisibleToUser
+            val input = messageInput(r)
+            if (input == null) {
+                if (attempt < 3) { h.postDelayed({ pressSend(attempt + 1) }, 600); return }
+                note("✗ пропало поле ввода\n" + dump(r)); done(Fail.NO_SEND); return
             }
+            val ib = Rect().also { input.getBoundsInScreen(it) }
+            val dp = svc.resources.displayMetrics.density
+            // Кандидаты: видимые элементы в той же строке, что и поле ввода, правее его середины.
+            val row = ArrayList<AccessibilityNodeInfo>()
+            collect(r) { n ->
+                if (!n.isVisibleToUser || n.isEditable) return@collect
+                val b = Rect().also { n.getBoundsInScreen(it) }
+                val cy = b.centerY()
+                if (cy < ib.top - 40 * dp || cy > ib.bottom + 40 * dp) return@collect
+                if (b.left < ib.centerX()) return@collect
+                if (b.width() > 120 * dp || b.height() > 120 * dp) return@collect
+                row.add(n)
+            }
+            fun lab(n: AccessibilityNodeInfo) = label(n).trim() + " " + (n.viewIdResourceName ?: "").lowercase()
+            val send = row.firstOrNull { val l = lab(it); (l.contains("отправить") || l.contains("send")) && !l.contains("отправлено") }
+                ?: row.firstOrNull { val l = lab(it); l.contains("отправ") && !l.contains("отправлено") }
+                // Иначе — самая правая нажимаемая кнопка в строке (в MAX там «Отправить» после ввода текста).
+                ?: row.filter { it.isClickable }.maxByOrNull { Rect().also { b -> it.getBoundsInScreen(b) }.right }
             if (send == null) {
                 if (attempt < 3) { h.postDelayed({ pressSend(attempt + 1) }, 600); return }
-                note("✗ нет кнопки «Отправить»\n" + dump(r))
+                note("✗ нет кнопки «Отправить» в строке ввода\n" + dump(r))
                 done(Fail.NO_SEND)
                 return
             }
-            note("✓ кнопка: ${describe(send)}")
+            note("✓ кнопка: ${describe(send)}; в строке: " + row.joinToString(" | ") { describe(it) }.take(400))
             tap(send)
-            // Проверка: поле ввода опустело.
-            waitFor(3000, "сообщение ушло", {
-                val inp = messageInput(root())
-                inp == null || inp.text.isNullOrEmpty() || inp.text.toString() != text
+            // Проверка: поле ввода опустело (или снова показывает подсказку).
+            waitFor(4000, "сообщение ушло", {
+                val t = messageInput(root())?.text?.toString()?.trim() ?: ""
+                t.isEmpty() || t.equals("сообщение", true) || t.equals("message", true)
             }, { done(null) }, { done(Fail.NO_SEND) })
         }
 
