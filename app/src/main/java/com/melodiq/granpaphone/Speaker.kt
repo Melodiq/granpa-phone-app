@@ -58,9 +58,13 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
                 .build()
         )
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {}
+            override fun onStart(utteranceId: String?) {
+                talking = true
+            }
 
             override fun onDone(utteranceId: String?) {
+                talking = false
+                lastSpokeAt = System.currentTimeMillis()
                 val cb = utteranceId?.let { callbacks.remove(it) } ?: return
                 main.post { cb() }
             }
@@ -110,6 +114,14 @@ class Speaker(private val ctx: Context) : TextToSpeech.OnInitListener {
     }
 
     val isSpeaking: Boolean get() = ready && tts.isSpeaking
+
+    @Volatile private var talking = false
+    @Volatile var lastSpokeAt = 0L
+        private set
+
+    /** Помощник сам говорит или только что договорил — микрофон слышит его же голос. */
+    val selfAudible: Boolean
+        get() = talking || isSpeaking || System.currentTimeMillis() - lastSpokeAt < 1200
 
     // ---------- выбор голоса ----------
 

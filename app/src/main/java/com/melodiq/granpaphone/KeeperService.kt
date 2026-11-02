@@ -62,15 +62,17 @@ class KeeperService : Service() {
                 val phr = Phrases.of(this@KeeperService)
                 // Для китайского слушаем свободно: «阿廖沙» может не быть в словаре модели.
                 val grammar = if (phr.useGrammar) {
-                    (phr.wakePhrases + phr.readPhrases).mapNotNull { ears.fixPhrase(it) }
+                    (phr.wakePhrases + phr.readPhrases.filter { phr.isWake(it) }).mapNotNull { ears.fixPhrase(it) }
                 } else null
                 if (grammar != null && grammar.isEmpty()) { setWakeListening(false); return@whenReady }
                 setWakeListening(true)
                 // Строгий отбор: слово должно прозвучать уверенно и без потока посторонней речи —
                 // тогда не срабатывает от видео, телевизора и другого языка.
                 val accept = { h: Hyp ->
+                    // Помощник сам говорит (напоминание, приветствие) — это не команда.
+                    val selfTalk = App.instance.speaker.selfAudible || ScreenReaderService.isReading
                     val (minConf, maxUnk) = Profile.wakeThreshold(this@KeeperService)
-                    val ok = h.confident({ phr.isWake(it) || phr.isReadScreen(it) }, minConf, maxUnk, 7)
+                    val ok = !selfTalk && h.confident({ phr.isWake(it) }, minConf, maxUnk, 7)
                     // Для настройки: что именно услышали и с какой уверенностью.
                     val hit = h.words.filter { phr.isWake(it.first) || phr.isReadScreen(it.first) }
                     if (hit.isNotEmpty() || phr.isWake(h.text)) {
@@ -82,7 +84,8 @@ class KeeperService : Service() {
                 ears.listen(grammar, 10 * 60_000, accept = accept) { text ->
                     if (!shouldWakeListen()) { setWakeListening(false); return@listen }
                     when {
-                        text != null && phr.isReadScreen(text) -> readScreenByVoice()
+                        // Читать экран в фоне — только вместе с «Алёша»: «Алёша, прочитай экран».
+                        text != null && phr.isReadScreen(text) && phr.isWake(text) -> readScreenByVoice()
                         text != null && phr.isWake(text) -> wakeByVoice()
                         else -> handler.postDelayed(this, 150)
                     }

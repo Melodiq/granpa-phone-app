@@ -56,7 +56,7 @@ An Android voice assistant for an elderly person who is almost blind; speech rec
 
 ### Напоминания
 
-За сутки, за 6 часов, за 3 часа и за час до события. Каждое повторяется каждые 5 минут, пока экран не включат.
+За сутки, за 6 часов, за 3 часа и за час до события. Каждое повторяется каждые 5 минут, пока экран не включат. С 00:00 до 06:00 помощник о делах не напоминает.
 
 ### Экран
 
@@ -139,7 +139,7 @@ The ringtone is lowered while the assistant listens and restored afterwards.
 
 ### Reminders
 
-24, 6, 3 and 1 hour before an event, each repeated every 5 minutes until the screen is turned on.
+24, 6, 3 and 1 hour before an event, each repeated every 5 minutes until the screen is turned on. No reminders between midnight and 6 AM.
 
 ### Screen
 
@@ -222,7 +222,7 @@ Russian, English or Chinese, chosen in setup. Everything follows the choice: on-
 
 ### 提醒
 
-在事件前24小时、6小时、3小时和1小时提醒，每次提醒每5分钟重复一次，直到点亮屏幕。
+在事件前24小时、6小时、3小时和1小时提醒，每次提醒每5分钟重复一次，直到点亮屏幕。0:00 至 6:00 不提醒。
 
 ### 屏幕
 
