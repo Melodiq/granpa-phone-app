@@ -31,6 +31,7 @@ A voice assistant for Android for an elderly person who can barely see. Everythi
 - «Позвони дочери», «набери Андрея» — помощник переспрашивает и только потом звонит.
 - Падежи и заглавные буквы не важны: «дочь», «дочке», «дочери», «доча» — один контакт.
 - **«Отбой»** во время звонка (и пока номер набирается) кладёт трубку.
+- **«Кто написал?»** — кто и где написал последним (эсэмэс, Макс, Телеграм, Ватсап), кто ещё писал за сутки; «Прочитать?» → «да» — читает текст. Нужен доступ к уведомлениям (пункт 10 настройки).
 - **«Кто звонил?»** — последний пропущенный: «Последний пропущенный: Дочь, сегодня в девять часов. Перезвонить?» → «да».
 
 ### Сообщения: СМС и Макс
@@ -133,6 +134,7 @@ Every command is confirmed with a sound and a vibration. A big colored circle sh
 
 - **Calls by voice:** "call my daughter" → "Call Daughter? Say yes or no" → "yes". Say **"rest"** during a call (even while dialing) to hang up.
 - **Messages, SMS or Max:** "message my daughter" → "SMS or Max?" → dictate → confirm. SMS is sent directly; for Max the assistant opens the app, finds the contact and sends it (needs screen reading on).
+- **"Who wrote?"** — who wrote last and where (SMS, Max, Telegram, WhatsApp), who else wrote today, then "Read it?". Needs notification access (setup step 10).
 - **"Who called?"** — the last missed call with time, then "Call back?".
 - **Incoming calls:** the caller is announced by name, even with the screen off and over the system call screen. Answer: "answer", "pick up", or tap the screen. Decline: "decline", "hang up".
 - **Screen reading:** **"Alyosha, read the screen"** reads all on-screen text aloud while the screen edges glow. Stop: tap the screen, a volume button, or "Alyosha, stop".
@@ -172,6 +174,7 @@ Every command is confirmed with a sound and a vibration. A big colored circle sh
 
 - **语音打电话：** 「给女儿打电话」→「给女儿打电话吗？」→「是」。通话中（包括拨号时）说 **「休息」** 挂断。
 - **短信或 Max 消息：** 「给女儿发消息」→「发短信还是用 Max？」→ 口述内容 → 确认。短信直接发送；Max 由助手打开应用、找到联系人并发送（需开启读屏）。
+- **「谁发消息了？」**——最近谁在哪里发了消息（短信、Max、Telegram、WhatsApp），并询问是否朗读。需开启通知使用权（设置第 10 项）。
 - **「谁打过电话？」**——朗读最近的未接来电和时间，并询问是否回电。
 - **来电：** 朗读来电人姓名，熄屏时和系统来电界面之上也可用。接听：「接听」或点击屏幕；挂断：「挂断」「不接」。
 - **读屏：** **「阿廖沙，读屏幕」** 朗读屏幕上的全部文字，屏幕边缘发光。停止：点击屏幕、音量键或「阿廖沙，停」。

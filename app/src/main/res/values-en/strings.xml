@@ -88,4 +88,7 @@
     <string name="max_snapshot">Capture a Max screen report (for the developer)</string>
     <string name="max_last">Last attempt:</string>
     <string name="max_share">Share the report</string>
+    <string name="msg_listener_label">Alyosha: who wrote</string>
+    <string name="step_notif">10. Notification access: «Alyosha: who wrote» → turn on</string>
+    <string name="notif_note">Needed for «who wrote?»: the assistant says who wrote and where — SMS, Max, Telegram, WhatsApp. If the switch is greyed out, use «Allow restricted settings» as for screen reading.</string>
 </resources>

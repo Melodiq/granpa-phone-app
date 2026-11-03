@@ -7,7 +7,7 @@ import java.util.Locale
 /** Что пользователь попросил. */
 enum class Cmd {
     SLEEP, CANCEL, REPEAT, HELP, DELETE, NOTE, LIST_ALL, LIST_TODAY, LIST_TOMORROW,
-    WEATHER_NOW, WEATHER_TOMORROW, WEATHER_AFTER, DATE, TIME, CALL_VERB, READ_SCREEN, MESSAGE, MISSED, NONE
+    WEATHER_NOW, WEATHER_TOMORROW, WEATHER_AFTER, DATE, TIME, CALL_VERB, READ_SCREEN, MESSAGE, MISSED, WHO_WROTE, NONE
 }
 
 /**
@@ -125,6 +125,16 @@ interface Phrases {
     val noMissed: String
     /** «Последний пропущенный: Дочь, сегодня в … Перезвонить?» */
     fun missed(m: Missed): String
+
+    // ---------- «кто написал?» ----------
+    fun isWhoWrote(text: String): Boolean
+    val noMessages: String
+    val needNotifAccess: String
+    /** Где: «в Максе», «в Телеграме», «эсэмэс»… */
+    fun where(m: Msg, sms: Boolean): String
+    /** «Последнее сообщение: Дочь, в Максе, сегодня в … Ещё писали: … Прочитать?» */
+    fun lastMessages(last: Msg, sms: Boolean, others: List<String>): String
+    fun messageText(m: Msg): String
 
     val voiceSample: String
     fun voiceTest(c: Calendar): String

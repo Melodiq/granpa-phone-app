@@ -142,6 +142,11 @@ class SetupActivity : Activity() {
             note(getString(if (on) R.string.echo_on else R.string.echo_off, EchoFreeMic.echoDetails))
         }
 
+        item(getString(R.string.step_notif), MessageListener.enabled(this)) {
+            open(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+        }
+        note(getString(R.string.notif_note))
+
         maxSection()
 
         if (isXiaomi()) xiaomiSection()

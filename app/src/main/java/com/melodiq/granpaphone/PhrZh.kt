@@ -41,7 +41,7 @@ object PhrZh : Phrases {
         "报时：说几点了。报日期：说今天几号。" +
         "报天气：说天气、明天天气或者后天天气。" +
         "记事：说记一下。读安排：说今天有什么安排，或者明天有什么安排。" +
-        "查未接来电：说谁打过电话。" +
+        "查未接来电：说谁打过电话。查新消息：说谁发消息了。" +
         "朗读屏幕上的内容：说读屏幕。停止朗读：说「阿廖沙，停」或点击屏幕。挂断电话：说休息。" +
         "删除记录：说删除记录。重复上一个回答：说重复。" +
         "让我休息：说休息。再叫我：说阿廖沙。" +
@@ -246,6 +246,29 @@ object PhrZh : Phrases {
         return "最近的未接来电：${m.name}，$day${clock(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))}。${count}要回电吗？"
     }
 
+    override fun isWhoWrote(text: String) = has(compact(text), "谁发", "谁给我发", "谁写", "新消息", "有消息吗", "有没有消息")
+    override val noMessages = "没有新消息。"
+    override val needNotifAccess = "要知道谁发了消息，请家人在助手设置中开启通知使用权。"
+    override fun where(m: Msg, sms: Boolean): String = when {
+        sms -> "短信"
+        m.pkg == "ru.oneme.app" -> "Max上"
+        m.pkg.startsWith("org.telegram") -> "Telegram上"
+        m.pkg.startsWith("com.whatsapp") -> "WhatsApp上"
+        else -> "${m.app}上"
+    }
+    override fun lastMessages(last: Msg, sms: Boolean, others: List<String>): String {
+        val now = Calendar.getInstance()
+        val c = Calendar.getInstance().apply { timeInMillis = last.time }
+        val day = when (RuDate.daysBetween(now, c)) {
+            0 -> "今天"
+            -1 -> "昨天"
+            else -> "${c.get(Calendar.MONTH) + 1}月${c.get(Calendar.DAY_OF_MONTH)}日"
+        }
+        val more = if (others.isNotEmpty()) "还有：" + others.joinToString("、") + "。" else ""
+        return "最新消息：${last.sender}，${where(last, sms)}，$day${clock(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))}。${more}要读吗？"
+    }
+    override fun messageText(m: Msg) = "${m.sender}说：${m.text}"
+
     override val voiceSample = "您好，我是阿廖沙，您的助手。这是我的声音。"
     override fun voiceTest(c: Calendar) = "语音测试。" + timeText(c)
 
@@ -292,6 +315,7 @@ object PhrZh : Phrases {
         val weather = has(s, "天气", "气温", "温度")
         return when {
             isWhoCalled(text) -> Cmd.MISSED
+            isWhoWrote(text) -> Cmd.WHO_WROTE
             isReadScreen(text) -> Cmd.READ_SCREEN
             isMessage(text) -> Cmd.MESSAGE
             has(s, "休息", "睡觉", "晚安", "退下") -> Cmd.SLEEP

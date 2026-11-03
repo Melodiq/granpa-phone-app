@@ -88,4 +88,7 @@
     <string name="max_snapshot">Снять отчёт об экране Макс (для разработчика)</string>
     <string name="max_last">Последняя попытка:</string>
     <string name="max_share">Поделиться отчётом</string>
+    <string name="msg_listener_label">Алёша: кто написал</string>
+    <string name="step_notif">10. Доступ к уведомлениям: «Алёша: кто написал» → включить</string>
+    <string name="notif_note">Нужно для команды «кто написал?»: помощник скажет, кто и где написал — эсэмэс, Макс, Телеграм, Ватсап. Если переключатель серый — так же, как для чтения экрана: «Разрешить ограниченные настройки».</string>
 </resources>

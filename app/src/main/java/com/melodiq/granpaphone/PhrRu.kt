@@ -30,7 +30,7 @@ object PhrRu : Phrases {
         "Сказать время: скажите время. Сказать дату: какое сегодня число. " +
         "Рассказать погоду: скажите погода, погода на завтра или погода на послезавтра. " +
         "Записать дело: скажите запиши. Рассказать дела: что у меня сегодня, или что у меня завтра. " +
-        "Узнать, кто звонил: скажите кто звонил. " +
+        "Узнать, кто звонил: скажите кто звонил. Кто написал: скажите кто написал. " +
         "Прочитать всё, что на экране: скажите прочитай экран. Остановить чтение: скажите Алёша, стоп, или коснитесь экрана. Сбросить звонок: скажите отбой. " +
         "Удалить запись: скажите удали запись. Повторить последний ответ: скажите повтори. " +
         "Чтобы я отдохнул, скажите: отбой. Чтобы позвать снова, скажите: Алёша. " +
@@ -285,6 +285,36 @@ object PhrRu : Phrases {
         return "Последний пропущенный: ${m.name}, $day в ${Ru.clockAt(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))}.$count Перезвонить?"
     }
 
+    override fun isWhoWrote(text: String): Boolean {
+        val w = words(text)
+        return (has(w, "кто") && has(w, "написал", "написала", "написали", "писал", "писала", "писали")) ||
+            (has(w, "новые", "есть", "какие") && has(w, "сообщения"))
+    }
+    override val noMessages = "Новых сообщений нет."
+    override val needNotifAccess = "Чтобы я знал, кто написал, попросите родных включить доступ к уведомлениям в настройке помощника."
+    override fun where(m: Msg, sms: Boolean): String = when {
+        sms -> "эсэмэс"
+        m.pkg == "ru.oneme.app" -> "в Максе"
+        m.pkg.startsWith("org.telegram") || m.pkg == "org.thunderdog.challegram" -> "в Телеграме"
+        m.pkg.startsWith("com.whatsapp") -> "в Ватсапе"
+        m.pkg == "com.viber.voip" -> "в Вайбере"
+        m.pkg == "com.vkontakte.android" -> "в ВКонтакте"
+        else -> "в приложении ${m.app}"
+    }
+    override fun lastMessages(last: Msg, sms: Boolean, others: List<String>): String {
+        val now = Calendar.getInstance()
+        val c = Calendar.getInstance().apply { timeInMillis = last.time }
+        val day = when (RuDate.daysBetween(now, c)) {
+            0 -> "сегодня"
+            -1 -> "вчера"
+            else -> Ru.dayMonth(c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH))
+        }
+        val more = if (others.isNotEmpty()) " Ещё писали: " + others.joinToString(", ") + "." else ""
+        return "Последнее сообщение: ${last.sender}, ${where(last, sms)}, $day в " +
+            Ru.clockAt(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE)) + ".$more Прочитать?"
+    }
+    override fun messageText(m: Msg) = "${m.sender} пишет: ${m.text}"
+
     override val voiceSample = "Здравствуйте. Я Алёша, ваш помощник. Так звучит мой голос."
     override fun voiceTest(c: Calendar) = "Проверка голоса. " + timeText(c)
 
@@ -306,6 +336,7 @@ object PhrRu : Phrases {
         "отдыхай полчаса", "отдыхай час", "отдохни полчаса", "отдохни час", "отдыхай тридцать минут",
         "позвонить", "позвони", "набери", "звонок",
         "прочитай экран", "что на экране", "прочитай", "читай экран",
+        "кто написал", "кто мне написал", "кто писал", "новые сообщения", "есть сообщения", "какие сообщения",
         "кто звонил", "кто мне звонил", "кто звонил мне", "пропущенные звонки", "пропущенный звонок", "пропущенные",
         "напиши", "отправь сообщение", "напиши сообщение", "сообщение",
         "смс", "эсэмэс", "макс", "в макс", "напиши смс", "напиши в макс", "отправь смс"
@@ -335,6 +366,7 @@ object PhrRu : Phrases {
         val weather = has(w, "погода", "погоду", "погодой", "улице")
         return when {
             isWhoCalled(text) -> Cmd.MISSED
+            isWhoWrote(text) -> Cmd.WHO_WROTE
             isReadScreen(text) -> Cmd.READ_SCREEN
             isMessage(text) -> Cmd.MESSAGE
             w.any { it in sleepWords } -> Cmd.SLEEP

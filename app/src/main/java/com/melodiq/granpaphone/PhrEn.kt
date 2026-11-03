@@ -37,7 +37,7 @@ object PhrEn : Phrases {
         "Tell the time: say time. Tell the date: say what's the date. " +
         "Tell the weather: say weather, weather tomorrow, or weather the day after tomorrow. " +
         "Take a note: say take a note. Read your plans: say what do I have today, or what do I have tomorrow. " +
-        "Hear missed calls: say who called. " +
+        "Hear missed calls: say who called. New messages: say who wrote. " +
         "Read everything on the screen: say read the screen. To stop reading, say: Alyosha, stop, or tap the screen. To hang up a call, say: rest. " +
         "Delete a note: say delete a note. Repeat the last answer: say repeat. " +
         "To let me rest, say: rest. To call me again, say: Alyosha. " +
@@ -270,6 +270,33 @@ object PhrEn : Phrases {
         return "Last missed call: ${m.name}, $day at ${clock(c)}.$count Call back?"
     }
 
+    override fun isWhoWrote(text: String): Boolean {
+        val w = words(text)
+        return (has(w, "who") && has(w, "wrote", "texted", "messaged")) || (has(w, "new", "any") && has(w, "messages"))
+    }
+    override val noMessages = "No new messages."
+    override val needNotifAccess = "To know who wrote, ask your family to turn on notification access in the assistant's setup."
+    override fun where(m: Msg, sms: Boolean): String = when {
+        sms -> "by SMS"
+        m.pkg == "ru.oneme.app" -> "on Max"
+        m.pkg.startsWith("org.telegram") || m.pkg == "org.thunderdog.challegram" -> "on Telegram"
+        m.pkg.startsWith("com.whatsapp") -> "on WhatsApp"
+        m.pkg == "com.viber.voip" -> "on Viber"
+        else -> "in ${m.app}"
+    }
+    override fun lastMessages(last: Msg, sms: Boolean, others: List<String>): String {
+        val now = Calendar.getInstance()
+        val c = Calendar.getInstance().apply { timeInMillis = last.time }
+        val day = when (RuDate.daysBetween(now, c)) {
+            0 -> "today"
+            -1 -> "yesterday"
+            else -> "on " + SimpleDateFormat("MMMM d", Locale.US).format(c.time)
+        }
+        val more = if (others.isNotEmpty()) " Also wrote: " + others.joinToString(", ") + "." else ""
+        return "Last message: ${last.sender}, ${where(last, sms)}, $day at ${clock(c)}.$more Read it?"
+    }
+    override fun messageText(m: Msg) = "${m.sender} writes: ${m.text}"
+
     override val voiceSample = "Hello. I'm Alyosha, your assistant. This is how my voice sounds."
     override fun voiceTest(c: Calendar) = "Voice test. " + timeText(c)
 
@@ -290,7 +317,8 @@ object PhrEn : Phrases {
         "call", "make a call", "phone",
         "read the screen", "read screen", "what's on the screen", "read",
         "message", "send a message", "write a message",
-        "who called", "who called me", "missed calls", "missed call"
+        "who called", "who called me", "missed calls", "missed call",
+        "who wrote", "who wrote me", "who texted me", "new messages", "any messages"
     )
     override val callVerbs = listOf("call", "phone", "dial", "ring")
 
@@ -334,6 +362,7 @@ object PhrEn : Phrases {
         val afterTomorrow = hasSeq(w, "after", "tomorrow")
         return when {
             isWhoCalled(text) -> Cmd.MISSED
+            isWhoWrote(text) -> Cmd.WHO_WROTE
             isReadScreen(text) -> Cmd.READ_SCREEN
             isMessage(text) -> Cmd.MESSAGE
             has(w, "rest", "sleep", "goodnight") -> Cmd.SLEEP

@@ -169,6 +169,7 @@ class Assistant(private val act: MainActivity) {
             Cmd.DATE -> answer(p.dateText(Calendar.getInstance()))
             Cmd.TIME -> answer(p.timeText(Calendar.getInstance()))
             Cmd.MISSED -> whoCalled()
+            Cmd.WHO_WROTE -> whoWrote()
             Cmd.READ_SCREEN -> {
                 if (!ScreenReaderService.isOn) {
                     say(p.readerDisabled)
@@ -253,6 +254,28 @@ class Assistant(private val act: MainActivity) {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // ---------- «кто написал?» ----------
+
+    private fun whoWrote() {
+        val list = MessageListener.all(act)
+        if (list.isEmpty()) {
+            answer(if (MessageListener.enabled(act)) phr.noMessages else phr.needNotifAccess)
+            return
+        }
+        val last = list.first()
+        // Кто ещё писал за последние сутки (до трёх человек, без повторов).
+        val dayAgo = System.currentTimeMillis() - 24 * 3_600_000L
+        val others = list.drop(1).filter { it.time > dayAgo && it.sender != last.sender }
+            .map { it.sender + " " + phr.where(it, MessageListener.isSms(act, it.pkg)) }.distinct().take(3)
+        val text = phr.lastMessages(last, MessageListener.isSms(act, last.pkg), others)
+        lastAnswer = text
+        say(text) {
+            askYesNo { yes ->
+                if (yes == true) answer(phr.messageText(last)) else say(phr.ok)
             }
         }
     }
