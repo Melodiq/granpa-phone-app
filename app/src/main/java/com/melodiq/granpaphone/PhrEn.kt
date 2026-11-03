@@ -37,6 +37,7 @@ object PhrEn : Phrases {
         "Tell the time: say time. Tell the date: say what's the date. " +
         "Tell the weather: say weather, weather tomorrow, or weather the day after tomorrow. " +
         "Take a note: say take a note. Read your plans: say what do I have today, or what do I have tomorrow. " +
+        "Hear missed calls: say who called. " +
         "Read everything on the screen: say read the screen. To stop reading, say: Alyosha, stop, or tap the screen. To hang up a call, say: rest. " +
         "Delete a note: say delete a note. Repeat the last answer: say repeat. " +
         "To let me rest, say: rest. To call me again, say: Alyosha. " +
@@ -252,6 +253,23 @@ object PhrEn : Phrases {
     }
     override val msgCancelled = "Okay, not sending."
 
+    override fun isWhoCalled(text: String): Boolean {
+        val w = words(text)
+        return (has(w, "who") && has(w, "called", "call")) || has(w, "missed")
+    }
+    override val noMissed = "No missed calls."
+    override fun missed(m: Missed): String {
+        val now = Calendar.getInstance()
+        val c = Calendar.getInstance().apply { timeInMillis = m.time }
+        val day = when (RuDate.daysBetween(now, c)) {
+            0 -> "today"
+            -1 -> "yesterday"
+            else -> "on " + SimpleDateFormat("MMMM d", Locale.US).format(c.time)
+        }
+        val count = if (m.todayCount > 1) " ${m.todayCount} missed calls today." else ""
+        return "Last missed call: ${m.name}, $day at ${clock(c)}.$count Call back?"
+    }
+
     override val voiceSample = "Hello. I'm Alyosha, your assistant. This is how my voice sounds."
     override fun voiceTest(c: Calendar) = "Voice test. " + timeText(c)
 
@@ -271,7 +289,8 @@ object PhrEn : Phrases {
         "sleep for half an hour", "sleep for an hour",
         "call", "make a call", "phone",
         "read the screen", "read screen", "what's on the screen", "read",
-        "message", "send a message", "write a message"
+        "message", "send a message", "write a message",
+        "who called", "who called me", "missed calls", "missed call"
     )
     override val callVerbs = listOf("call", "phone", "dial", "ring")
 
@@ -314,6 +333,7 @@ object PhrEn : Phrases {
         val weather = has(w, "weather", "outside")
         val afterTomorrow = hasSeq(w, "after", "tomorrow")
         return when {
+            isWhoCalled(text) -> Cmd.MISSED
             isReadScreen(text) -> Cmd.READ_SCREEN
             isMessage(text) -> Cmd.MESSAGE
             has(w, "rest", "sleep", "goodnight") -> Cmd.SLEEP

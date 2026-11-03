@@ -30,6 +30,7 @@ object PhrRu : Phrases {
         "Сказать время: скажите время. Сказать дату: какое сегодня число. " +
         "Рассказать погоду: скажите погода, погода на завтра или погода на послезавтра. " +
         "Записать дело: скажите запиши. Рассказать дела: что у меня сегодня, или что у меня завтра. " +
+        "Узнать, кто звонил: скажите кто звонил. " +
         "Прочитать всё, что на экране: скажите прочитай экран. Остановить чтение: скажите Алёша, стоп, или коснитесь экрана. Сбросить звонок: скажите отбой. " +
         "Удалить запись: скажите удали запись. Повторить последний ответ: скажите повтори. " +
         "Чтобы я отдохнул, скажите: отбой. Чтобы позвать снова, скажите: Алёша. " +
@@ -266,6 +267,24 @@ object PhrRu : Phrases {
     }
     override val msgCancelled = "Хорошо, не отправляю."
 
+    override fun isWhoCalled(text: String): Boolean {
+        val w = words(text)
+        return (has(w, "кто") && has(w, "звонил", "звонила", "звонили")) ||
+            has(w, "пропущенные", "пропущенный", "пропущенных", "пропущенного")
+    }
+    override val noMissed = "Пропущенных звонков нет."
+    override fun missed(m: Missed): String {
+        val now = Calendar.getInstance()
+        val c = Calendar.getInstance().apply { timeInMillis = m.time }
+        val day = when (RuDate.daysBetween(now, c)) {
+            0 -> "сегодня"
+            -1 -> "вчера"
+            else -> Ru.dayMonth(c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH))
+        }
+        val count = if (m.todayCount > 1) " Всего сегодня пропущено: ${Ru.num(m.todayCount)}." else ""
+        return "Последний пропущенный: ${m.name}, $day в ${Ru.clockAt(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))}.$count Перезвонить?"
+    }
+
     override val voiceSample = "Здравствуйте. Я Алёша, ваш помощник. Так звучит мой голос."
     override fun voiceTest(c: Calendar) = "Проверка голоса. " + timeText(c)
 
@@ -287,6 +306,7 @@ object PhrRu : Phrases {
         "отдыхай полчаса", "отдыхай час", "отдохни полчаса", "отдохни час", "отдыхай тридцать минут",
         "позвонить", "позвони", "набери", "звонок",
         "прочитай экран", "что на экране", "прочитай", "читай экран",
+        "кто звонил", "кто мне звонил", "кто звонил мне", "пропущенные звонки", "пропущенный звонок", "пропущенные",
         "напиши", "отправь сообщение", "напиши сообщение", "сообщение",
         "смс", "эсэмэс", "макс", "в макс", "напиши смс", "напиши в макс", "отправь смс"
     )
@@ -314,6 +334,7 @@ object PhrRu : Phrases {
         val w = words(text)
         val weather = has(w, "погода", "погоду", "погодой", "улице")
         return when {
+            isWhoCalled(text) -> Cmd.MISSED
             isReadScreen(text) -> Cmd.READ_SCREEN
             isMessage(text) -> Cmd.MESSAGE
             w.any { it in sleepWords } -> Cmd.SLEEP

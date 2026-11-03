@@ -168,6 +168,7 @@ class Assistant(private val act: MainActivity) {
             Cmd.WEATHER_AFTER -> weather(2)
             Cmd.DATE -> answer(p.dateText(Calendar.getInstance()))
             Cmd.TIME -> answer(p.timeText(Calendar.getInstance()))
+            Cmd.MISSED -> whoCalled()
             Cmd.READ_SCREEN -> {
                 if (!ScreenReaderService.isOn) {
                     say(p.readerDisabled)
@@ -252,6 +253,21 @@ class Assistant(private val act: MainActivity) {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // ---------- «кто звонил?» ----------
+
+    private fun whoCalled() {
+        val m = CallLogReader.lastMissed(act)
+        if (m == null) { answer(phr.noMissed); return }
+        val text = phr.missed(m)
+        lastAnswer = text
+        say(text) {
+            askYesNo { yes ->
+                if (yes == true && m.number.isNotBlank()) call(Person(m.name, m.number, emptySet(), emptyList()))
+                else say(phr.ok)
             }
         }
     }
