@@ -91,4 +91,8 @@
     <string name="msg_listener_label">阿廖沙：谁发了消息</string>
     <string name="step_notif">10. 通知使用权：「阿廖沙：谁发了消息」→ 开启</string>
     <string name="notif_note">用于「谁发消息了？」：助手会说出谁在哪里发了消息——短信、Max、Telegram、WhatsApp。若开关为灰色，请像读屏一样「允许受限制的设置」。</string>
+    <string name="spk_title">免提</string>
+    <string name="spk_on">每次通话自动开启免提（点击关闭）</string>
+    <string name="spk_off">自动免提已关闭（点击开启）</string>
+    <string name="spk_last" formatted="true">上次通话：%1$s</string>
 </resources>

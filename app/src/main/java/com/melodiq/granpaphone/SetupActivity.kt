@@ -147,6 +147,14 @@ class SetupActivity : Activity() {
         }
         note(getString(R.string.notif_note))
 
+        title(getString(R.string.spk_title))
+        val spk = Speakerphone.auto(this)
+        item(getString(if (spk) R.string.spk_on else R.string.spk_off), spk) {
+            Speakerphone.setAuto(this, !spk)
+            rebuild()
+        }
+        if (Speakerphone.lastLog.isNotEmpty()) note(getString(R.string.spk_last, Speakerphone.lastLog))
+
         maxSection()
 
         if (isXiaomi()) xiaomiSection()

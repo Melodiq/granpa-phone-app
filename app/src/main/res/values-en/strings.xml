@@ -91,4 +91,8 @@
     <string name="msg_listener_label">Alyosha: who wrote</string>
     <string name="step_notif">10. Notification access: «Alyosha: who wrote» → turn on</string>
     <string name="notif_note">Needed for «who wrote?»: the assistant says who wrote and where — SMS, Max, Telegram, WhatsApp. If the switch is greyed out, use «Allow restricted settings» as for screen reading.</string>
+    <string name="spk_title">Speakerphone</string>
+    <string name="spk_on">Turn on speakerphone for every call (tap to turn off)</string>
+    <string name="spk_off">Automatic speakerphone is off (tap to turn on)</string>
+    <string name="spk_last" formatted="true">Last call: %1$s</string>
 </resources>

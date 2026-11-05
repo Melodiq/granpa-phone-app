@@ -465,9 +465,11 @@ class KeeperService : Service() {
                         handler.removeCallbacks(openAssistant)
                         if (was == TelephonyManager.CALL_STATE_RINGING) App.instance.speaker.stop()
                         onBusyChanged() // во время звонка слушаем «отбой»
+                        if (was != TelephonyManager.CALL_STATE_OFFHOOK) Speakerphone.onCallStarted(this@KeeperService)
                     }
                     else -> {
                         stopRinging()
+                        Speakerphone.onCallEnded()
                         if (was != TelephonyManager.CALL_STATE_IDLE) {
                             lastCallEnd = System.currentTimeMillis()
                             handler.removeCallbacks(stopLoop)
