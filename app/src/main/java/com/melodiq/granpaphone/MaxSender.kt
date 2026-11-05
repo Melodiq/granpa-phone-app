@@ -239,8 +239,10 @@ object MaxSender {
             } catch (_: Exception) {}
         }
 
-        // 5. Нажать «Отправить» — только кнопку в строке поля ввода, а не сообщения в переписке
-        //    (у них в описании тоже есть «Отправлено»).
+        // 5. Нажать «Отправить» — только в строке поля ввода, а не в переписке
+        //    (у сообщений в описании тоже есть «Отправлено»). Несколько способов по очереди:
+        //    подпись «Отправить» → правая нажимаемая кнопка → правый значок касанием →
+        //    «Ввод» клавиатуры → касание у правого края строки.
         private fun pressSend(attempt: Int) {
             val r = root()
             val input = messageInput(r)
@@ -250,35 +252,60 @@ object MaxSender {
             }
             val ib = Rect().also { input.getBoundsInScreen(it) }
             val dp = svc.resources.displayMetrics.density
-            // Кандидаты: видимые элементы в той же строке, что и поле ввода, правее его середины.
-            val row = ArrayList<AccessibilityNodeInfo>()
+            val screenW = svc.resources.displayMetrics.widthPixels
+            val row = ArrayList<Pair<AccessibilityNodeInfo, Rect>>()
             collect(r) { n ->
                 if (!n.isVisibleToUser || n.isEditable) return@collect
                 val b = Rect().also { n.getBoundsInScreen(it) }
                 val cy = b.centerY()
                 if (cy < ib.top - 40 * dp || cy > ib.bottom + 40 * dp) return@collect
-                if (b.left < ib.centerX()) return@collect
-                if (b.width() > 120 * dp || b.height() > 120 * dp) return@collect
-                row.add(n)
+                if (b.centerX() < ib.centerX()) return@collect
+                if (b.width() > 120 * dp || b.height() > 120 * dp || b.width() <= 0) return@collect
+                row.add(n to b)
             }
+            note("… поле $ib, экран ${screenW}px; в строке: " +
+                row.joinToString(" | ") { describe(it.first) + " " + it.second + (if (it.first.isClickable) " {c}" else "") }.take(700))
             fun lab(n: AccessibilityNodeInfo) = label(n).trim() + " " + (n.viewIdResourceName ?: "").lowercase()
-            val send = row.firstOrNull { val l = lab(it); (l.contains("отправить") || l.contains("send")) && !l.contains("отправлено") }
-                ?: row.firstOrNull { val l = lab(it); l.contains("отправ") && !l.contains("отправлено") }
-                // Иначе — самая правая нажимаемая кнопка в строке (в MAX там «Отправить» после ввода текста).
-                ?: row.filter { it.isClickable }.maxByOrNull { Rect().also { b -> it.getBoundsInScreen(b) }.right }
-            if (send == null) {
-                if (attempt < 3) { h.postDelayed({ pressSend(attempt + 1) }, 600); return }
-                note("✗ нет кнопки «Отправить» в строке ввода\n" + dump(r))
+            val byLabel = row.firstOrNull { val l = lab(it.first); (l.contains("отправ") || l.contains("send")) && !l.contains("отправлено") }
+            val clickable = row.filter { it.first.isClickable }.maxByOrNull { it.second.right }
+            val anyIcon = row.maxByOrNull { it.second.right }
+
+            val steps = ArrayList<Pair<String, () -> Unit>>()
+            byLabel?.let { steps.add("кнопка по подписи ${describe(it.first)}" to { tap(it.first) }) }
+            clickable?.let { if (it !== byLabel) steps.add("правая кнопка ${describe(it.first)}" to { tap(it.first) }) }
+            anyIcon?.let { if (it !== byLabel && it !== clickable) steps.add("касание правого значка ${it.second}" to { tapAt(it.second.exactCenterX(), it.second.exactCenterY()) }) }
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                steps.add("«Ввод» клавиатуры" to {
+                    input.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)
+                })
+            }
+            val edgeX = minOf(screenW - 28 * dp, maxOf(ib.right + 28 * dp, screenW - 28 * dp))
+            steps.add("касание у правого края строки ($edgeX, ${ib.centerY()})" to { tapAt(edgeX, ib.exactCenterY()) })
+            trySteps(steps, 0)
+        }
+
+        private fun sent(): Boolean {
+            val t = messageInput(root())?.text?.toString()?.trim() ?: ""
+            return t.isEmpty() || t.equals("сообщение", true) || t.equals("message", true) || !t.contains(text.take(5))
+        }
+
+        private fun trySteps(steps: List<Pair<String, () -> Unit>>, k: Int) {
+            if (k >= steps.size) {
+                note("✗ ни один способ не отправил\n" + dump(root()))
                 done(Fail.NO_SEND)
                 return
             }
-            note("✓ кнопка: ${describe(send)}; в строке: " + row.joinToString(" | ") { describe(it) }.take(400))
-            tap(send)
-            // Проверка: поле ввода опустело (или снова показывает подсказку).
-            waitFor(4000, "сообщение ушло", {
-                val t = messageInput(root())?.text?.toString()?.trim() ?: ""
-                t.isEmpty() || t.equals("сообщение", true) || t.equals("message", true)
-            }, { done(null) }, { done(Fail.NO_SEND) })
+            note("… пробую: ${steps[k].first}")
+            try { steps[k].second() } catch (_: Exception) {}
+            waitFor(2000, "сообщение ушло", { sent() }, { done(null) }, { trySteps(steps, k + 1) })
+        }
+
+        private fun tapAt(x: Float, y: Float) {
+            val p = Path().apply { moveTo(x, y) }
+            svc.dispatchGesture(
+                GestureDescription.Builder().addStroke(GestureDescription.StrokeDescription(p, 0, 60)).build(),
+                null, null
+            )
         }
 
         // ---------- поиск элементов и действия ----------
