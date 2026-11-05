@@ -129,6 +129,15 @@ object MaxSender {
             // Кнопка поиска — только в шапке (верхняя пятая часть экрана) и с короткой подписью,
             // чтобы не нажать на сообщение в переписке, где встретилось слово «поиск».
             val topZone = svc.resources.displayMetrics.heightPixels / 5
+            // Поиск уже открыт с прошлого раза (поле ввода в шапке) — пишем прямо в него.
+            val openField = findNode(r) { n ->
+                n.isEditable && n.isVisibleToUser && Rect().also { b -> n.getBoundsInScreen(b) }.top < topZone
+            }
+            if (openField != null) {
+                note("✓ поиск уже открыт: ${describe(openField)}")
+                typeName(openField)
+                return
+            }
             val search = findNode(r) { n ->
                 val s = label(n).trim()
                 (s.contains("поиск") || s.contains("search") || s.contains("найти")) && s.length <= 25 &&
@@ -292,6 +301,8 @@ object MaxSender {
         private fun trySteps(steps: List<Pair<String, () -> Unit>>, k: Int) {
             if (k >= steps.size) {
                 note("✗ ни один способ не отправил\n" + dump(root()))
+                // Не оставлять черновик в поле — иначе в следующий раз будет путаница.
+                messageInput(root())?.let { setText(it, "") }
                 done(Fail.NO_SEND)
                 return
             }
