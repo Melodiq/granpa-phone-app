@@ -42,6 +42,8 @@ interface Phrases {
     /** «отбой на 30 минут / на час» → минуты; просто «отбой» → null. */
     fun sleepMinutes(text: String): Int?
     val whomToCall: String
+    /** Услышал имя без «позвони» и неуверенно. */
+    val needCallVerb: String
     fun confirmCall(name: String): String
     fun calling(name: String): String
     val callFailed: String

@@ -36,7 +36,14 @@ class Assistant(private val act: MainActivity) {
         say(text)
     }
 
-    private fun listen(grammar: List<String>?, timeoutMs: Int, cb: (String?) -> Unit) {
+    /** Последний распознанный результат со словами и уверенностью. */
+    private var lastHyp: Hyp? = null
+
+    /**
+     * minConf — с какой уверенностью должно быть распознано каждое слово (0 — не проверять).
+     * Посторонняя речь (телевизор, разговор рядом) почти всегда даёт непонятые куски — такое отбрасываем.
+     */
+    private fun listen(grammar: List<String>?, timeoutMs: Int, minConf: Double = 0.0, cb: (String?) -> Unit) {
         val s = session
         val m = ears.model
         if (m == null) {
@@ -44,14 +51,20 @@ class Assistant(private val act: MainActivity) {
                 say(phr.asrBroken)
             } else {
                 say(phr.loading) {
-                    ears.whenReady { if (s == session) listen(grammar, timeoutMs, cb) }
+                    ears.whenReady { if (s == session) listen(grammar, timeoutMs, minConf, cb) }
                 }
             }
             return
         }
         sp.beepListen()
         act.setState(LampState.LISTEN, act.getString(R.string.status_listen))
-        ears.listen(grammar, timeoutMs) { text ->
+        lastHyp = null
+        val accept: ((Hyp) -> Boolean)? = if (grammar == null) null else { h ->
+            lastHyp = h
+            val known = h.words.filter { it.first != "[unk]" }
+            known.isNotEmpty() && h.unknown <= 2 && (minConf <= 0.0 || known.minOf { it.second } >= minConf)
+        }
+        ears.listen(grammar, timeoutMs, accept = accept) { text ->
             if (s != session) return@listen
             if (text != null) {
                 sp.beepHeard()
@@ -187,8 +200,14 @@ class Assistant(private val act: MainActivity) {
             }
             Cmd.CALL_VERB, Cmd.NONE -> {
                 val cands = Contacts.match(people, text, p)
+                // Одно имя без «позвони» — только если сказано чётко и без посторонней речи.
+                // Иначе обрывки разговора и телевизора превращались в «Позвонить такому-то?».
+                val h = lastHyp
+                val bareNameSure = h == null || (h.unknown == 0 && h.words.size <= 3 &&
+                    h.words.all { it.second >= 0.85 })
                 when {
-                    cands.isNotEmpty() -> confirmCall(cands, 0)
+                    cands.isNotEmpty() && (p.command(text) == Cmd.CALL_VERB || bareNameSure) -> confirmCall(cands, 0)
+                    cands.isNotEmpty() -> say(p.needCallVerb) { listenCommand(1) }
                     p.command(text) == Cmd.CALL_VERB -> say(p.whomToCall) { listenCommand(0) }
                     attempt == 0 -> say(p.notUnderstoodHint) { listenCommand(1) }
                     else -> say(p.notUnderstoodHelp)
@@ -328,7 +347,8 @@ class Assistant(private val act: MainActivity) {
     }
 
     private fun askYesNo(attempt: Int = 0, cb: (Boolean?) -> Unit) {
-        listen(smallGrammar(phr.yesNoPhrases), 6000) { text ->
+        // «Да» перед звонком или отправкой — только уверенное.
+        listen(smallGrammar(phr.yesNoPhrases), 6000, minConf = 0.75) { text ->
             val ans = text?.let { phr.yesNo(it) }
             if (ans == null && attempt == 0) say(phr.sayYesNo) { askYesNo(1, cb) }
             else cb(ans)

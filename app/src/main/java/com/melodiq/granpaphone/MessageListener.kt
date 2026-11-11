@@ -19,6 +19,8 @@ data class Msg(val sender: String, val pkg: String, val app: String, val text: S
 class MessageListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        // Любое уведомление может само включить экран — помним время, чтобы не здороваться в ответ.
+        if (sbn.packageName != packageName) lastPostAt = System.currentTimeMillis()
         try {
             val n = sbn.notification ?: return
             if (sbn.isOngoing) return
@@ -45,6 +47,9 @@ class MessageListener : NotificationListenerService() {
 
     companion object {
         private const val MAX_KEEP = 30
+
+        /** Когда последний раз пришло любое уведомление. */
+        @Volatile var lastPostAt = 0L
 
         private val KNOWN = setOf(
             "ru.oneme.app", "org.telegram.messenger", "org.telegram.messenger.web", "org.thunderdog.challegram",

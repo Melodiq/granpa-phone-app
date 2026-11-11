@@ -69,6 +69,7 @@ object PhrEn : Phrases {
         return null
     }
     override val whomToCall = "Who should I call?"
+    override val needCallVerb = "I didn't understand. To make a call, say: call, and the name."
     override fun confirmCall(name: String) = "Call $name? Say yes or no."
     override fun calling(name: String) = "Calling $name"
     override val callFailed = "I couldn't make the call. Ask your family to check the permissions."

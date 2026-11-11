@@ -63,6 +63,7 @@ object PhrZh : Phrases {
         return null
     }
     override val whomToCall = "给谁打电话？"
+    override val needCallVerb = "没听懂。要打电话，请说：打电话给，加上名字。"
     override fun confirmCall(name: String) = "给${name}打电话吗？请说是或者不是。"
     override fun calling(name: String) = "正在给${name}打电话"
     override val callFailed = "电话没有打出去。请家人检查权限。"

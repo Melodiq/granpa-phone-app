@@ -310,7 +310,9 @@ class KeeperService : Service() {
     }
 
     private val openAssistant = Runnable {
-        val afterCall = System.currentTimeMillis() - lastCallEnd < 10_000
+        val afterCall = System.currentTimeMillis() - lastCallEnd < 10_000 ||
+            // Экран включило уведомление, а не дед кнопкой — не здороваемся и не слушаем.
+            System.currentTimeMillis() - MessageListener.lastPostAt < 3_000
         if (callState == TelephonyManager.CALL_STATE_IDLE && !afterCall && !Sleep.isOn(this)) {
             val canOpen = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
             if (canOpen) {

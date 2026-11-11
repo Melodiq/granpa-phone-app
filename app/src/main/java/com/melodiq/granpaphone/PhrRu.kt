@@ -63,6 +63,7 @@ object PhrRu : Phrases {
         return null
     }
     override val whomToCall = "Кому позвонить?"
+    override val needCallVerb = "Не понял. Чтобы позвонить, скажите: позвони, и имя."
     override fun confirmCall(name: String) = "Позвонить: $name? Скажите да или нет."
     override fun calling(name: String) = "Звоню: $name"
     override val callFailed = "Не получилось позвонить. Попросите родных проверить разрешения."
