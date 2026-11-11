@@ -189,6 +189,7 @@ class ScreenReaderService : AccessibilityService() {
             type,
             // Касаемая рамка: любое касание экрана останавливает чтение.
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or // чтение не обрывается автогашением
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT

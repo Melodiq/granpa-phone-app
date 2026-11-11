@@ -64,6 +64,7 @@ class MainActivity : Activity() {
         buildUi()
 
         assistant = Assistant(this)
+        current = this
         KeeperService.start(this)
 
         if (!Setup.essentialsGranted(this)) {
@@ -268,6 +269,17 @@ class MainActivity : Activity() {
         super.onPause()
     }
 
+    override fun onDestroy() {
+        if (current === this) current = null
+        super.onDestroy()
+    }
+
+    /** Экран выключили кнопкой — бросить всё, что делали. */
+    fun cancelAll() {
+        assistant.stopAll()
+        if (!Sleep.isOn(this)) setState(LampState.IDLE, getString(R.string.main_idle))
+    }
+
     private fun applySleepLook() {
         if (Sleep.isOn(this)) {
             root.setBackgroundColor(Palette.NIGHT_DEEP)
@@ -306,6 +318,8 @@ class MainActivity : Activity() {
 
     fun setState(state: LampState, text: String? = null, hintText: String? = null) {
         lamp.state = state
+        // Пока слушаем или говорим, экран сам не гаснет — иначе оборвёт на полуслове.
+        root.keepScreenOn = state == LampState.LISTEN || state == LampState.HEARD || state == LampState.SPEAK
         if (text != null) status.text = text
         hint.text = hintText ?: when (state) {
             LampState.LISTEN -> getString(R.string.hint_listen)
@@ -317,6 +331,7 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        @Volatile var current: MainActivity? = null
         const val EXTRA_GREET = "greet"
         const val EXTRA_WAKE = "wake"
         const val EXTRA_LISTEN = "listen"

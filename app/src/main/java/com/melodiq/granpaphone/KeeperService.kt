@@ -335,6 +335,17 @@ class KeeperService : Service() {
                     handler.removeCallbacks(openAssistant)
                     handler.postDelayed(openAssistant, 700)
                 }
+                Intent.ACTION_SCREEN_OFF -> {
+                    // Кнопка выключения экрана = «хватит»: обрываем речь, чтение и разговор.
+                    // Во время звонка не трогаем: там экран гасит датчик у уха.
+                    if (callState == TelephonyManager.CALL_STATE_IDLE) {
+                        handler.removeCallbacks(openAssistant)
+                        MainActivity.current?.cancelAll()
+                        App.instance.speaker.stop()
+                        ScreenReaderService.stop()
+                        handler.postDelayed({ onBusyChanged() }, 700) // снова ждать «Алёша»
+                    }
+                }
                 Intent.ACTION_USER_PRESENT -> handler.postDelayed({ Reminders.onUserPresent(this@KeeperService) }, 2500)
             }
         }
@@ -348,6 +359,7 @@ class KeeperService : Service() {
         Calls.restoreRinger(this) // на случай, если прошлый раз служба упала во время звонка
         val f = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_USER_PRESENT)
         }
         ContextCompat.registerReceiver(this, screenReceiver, f, ContextCompat.RECEIVER_NOT_EXPORTED)
